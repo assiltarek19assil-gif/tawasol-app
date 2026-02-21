@@ -2,34 +2,48 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة الشركة - نظام الحظر</title>
+    <title>لوحة تحكم الشركة - الإدارة العليا</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --danger: #e94560; --bg: #1a1a2e; --card: #16213e; --success: #28a745; }
-        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 20px; }
-        .section-box { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #30475e; }
-        table { width: 100%; border-collapse: collapse; background: #0f3460; }
-        th, td { padding: 12px; border: 1px solid #30475e; text-align: center; }
-        th { background: var(--danger); }
-        .ban-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-        .unban-btn { background: var(--success); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
-        .post-item { background: #1b262c; padding: 10px; border-radius: 8px; margin: 5px 0; border-right: 4px solid var(--danger); }
+        :root { --danger: #ff4757; --success: #2ed573; --dark: #2f3542; --light: #f1f2f6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        header { background: var(--dark); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #57606f; }
+        .ban-btn { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        .unban-btn { background: var(--success); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .banned { background: #ffe0e3; color: var(--danger); }
+        .active { background: #e3ffef; color: var(--success); }
     </style>
 </head>
 <body>
 
-<div style="max-width: 900px; margin: auto;">
-    <h1>🛡️ لوحة التحكم: نظام إغلاق الحسابات</h1>
+<div class="container">
+    <header>
+        <h1>🛡️ لوحة التحكم الإدارية</h1>
+        <p>مراقبة المستخدمين وإدارة الصلاحيات</p>
+    </header>
 
-    <div class="section-box">
-        <h2>👥 إدارة المستخدمين</h2>
-        <div id="usersList">جاري التحميل...</div>
-    </div>
-
-    <div class="section-box">
-        <h2>📝 الرقابة على المنشورات والدردشات</h2>
-        <div id="logs">المحتوى يظهر هنا تلقائياً...</div>
+    <div class="card">
+        <h2>👥 قائمة المستخدمين</h2>
+        <table id="userTable">
+            <thead>
+                <tr>
+                    <th>المستخدم</th>
+                    <th>كلمة السر</th>
+                    <th>الحالة</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody id="usersList">
+                <tr><td colspan="4">جاري مزامنة البيانات...</td></tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -38,35 +52,35 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // جلب المستخدمين مع ميزة الحظر
+    // جلب البيانات مع معالجة الأخطاء
     db.ref('users').on('value', s => {
-        let html = `<table><tr><th>الاسم</th><th>كلمة السر</th><th>الحالة</th><th>إجراء</th></tr>`;
+        const list = document.getElementById('usersList');
+        list.innerHTML = "";
+        if(!s.exists()) { list.innerHTML = "<tr><td colspan='4'>لا يوجد مستخدمين بعد</td></tr>"; return; }
+        
         s.forEach(u => {
             const d = u.val();
             const isBanned = d.status === 'banned';
-            html += `<tr>
-                <td>${d.name || u.key}</td>
-                <td style="color:#f9ed69">${d.pass}</td>
-                <td style="color:${isBanned ? 'red' : '#28a745'}">${isBanned ? 'مغلق' : 'نشط'}</td>
-                <td>
-                    ${isBanned ? 
-                        `<button class="unban-btn" onclick="toggleBan('${u.key}', 'active')">تفعيل</button>` : 
-                        `<button class="ban-btn" onclick="toggleBan('${u.key}', 'banned')">إغلاق الحساب</button>`}
-                </td>
-            </tr>`;
+            list.innerHTML += `
+                <tr>
+                    <td><b>${d.name || u.key}</b></td>
+                    <td style="font-family: monospace;">${d.pass || '----'}</td>
+                    <td><span class="status-badge ${isBanned ? 'banned' : 'active'}">${isBanned ? 'محظور' : 'نشط'}</span></td>
+                    <td>
+                        <button class="${isBanned ? 'unban-btn' : 'ban-btn'}" onclick="setBan('${u.key}', ${!isBanned})">
+                            ${isBanned ? 'تفعيل الحساب' : 'إغلاق الحساب'}
+                        </button>
+                    </td>
+                </tr>`;
         });
-        html += `</table>`;
-        document.getElementById('usersList').innerHTML = html;
     });
 
-    function toggleBan(userId, newStatus) {
-        if(confirm(`هل أنت متأكد من تغيير حالة حساب ${userId}؟`)) {
-            db.ref('users/' + userId + '/status').set(newStatus);
-        }
+    function setBan(uid, ban) {
+        const status = ban ? 'banned' : 'active';
+        db.ref('users/' + uid + '/status').set(status)
+          .then(() => alert("تم تحديث حالة الحساب بنجاح"))
+          .catch(e => alert("خطأ: " + e.message));
     }
-
-    // عرض المنشورات للحذف
-    db.ref('posts').on('value', s => {
-        let html = "";
-        s.forEach(p => {
-            const d = p.val();
+</script>
+</body>
+</html>
