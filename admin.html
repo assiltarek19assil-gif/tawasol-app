@@ -2,101 +2,71 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم الشركة - الرقابة المركزية</title>
+    <title>إدارة الشركة - نظام الحظر</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --danger: #e94560; --bg: #1a1a2e; --card: #16213e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .section-box { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #30475e; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        h2 { color: var(--danger); border-bottom: 2px solid var(--danger); padding-bottom: 10px; text-align: center; }
-        
-        /* تصميم الجدول */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0f3460; }
+        :root { --danger: #e94560; --bg: #1a1a2e; --card: #16213e; --success: #28a745; }
+        body { font-family: sans-serif; background: var(--bg); color: #fff; padding: 20px; }
+        .section-box { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #30475e; }
+        table { width: 100%; border-collapse: collapse; background: #0f3460; }
         th, td { padding: 12px; border: 1px solid #30475e; text-align: center; }
-        th { background: var(--danger); color: white; }
-        .pass-highlight { color: #f9ed69; font-weight: bold; font-family: monospace; }
-
-        /* تصميم الرقابة */
-        .post-item, .chat-room { background: #1b262c; padding: 15px; border-radius: 8px; margin: 10px 0; border-right: 4px solid var(--danger); }
-        .del-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; float: left; }
-        .chat-room { border-right-color: #00adb5; }
-        .msg-line { font-size: 14px; padding: 4px 0; border-bottom: 1px solid #393e46; }
-        .sender { color: #00adb5; font-weight: bold; }
+        th { background: var(--danger); }
+        .ban-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .unban-btn { background: var(--success); color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px; }
+        .post-item { background: #1b262c; padding: 10px; border-radius: 8px; margin: 5px 0; border-right: 4px solid var(--danger); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1 style="text-align: center;">🛡️ لوحة تحكم الشركة</h1>
+<div style="max-width: 900px; margin: auto;">
+    <h1>🛡️ لوحة التحكم: نظام إغلاق الحسابات</h1>
 
     <div class="section-box">
-        <h2>👥 حسابات وكلمات سر المستخدمين</h2>
-        <div id="usersList">جاري جلب البيانات...</div>
+        <h2>👥 إدارة المستخدمين</h2>
+        <div id="usersList">جاري التحميل...</div>
     </div>
 
     <div class="section-box">
-        <h2>📝 الرقابة على المنشورات</h2>
-        <div id="postsList">جاري تحميل المنشورات...</div>
-    </div>
-
-    <div class="section-box">
-        <h2>💬 مراقبة الدردشات المباشرة</h2>
-        <div id="chatsList">جاري مراقبة غرف الدردشة...</div>
+        <h2>📝 الرقابة على المنشورات والدردشات</h2>
+        <div id="logs">المحتوى يظهر هنا تلقائياً...</div>
     </div>
 </div>
 
 <script>
-    // تهيئة السحابة
     const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // 1. عرض كلمات السر والمستخدمين
+    // جلب المستخدمين مع ميزة الحظر
     db.ref('users').on('value', s => {
-        let html = `<table><tr><th>الاسم</th><th>الرمز (Tag)</th><th>كلمة السر</th></tr>`;
+        let html = `<table><tr><th>الاسم</th><th>كلمة السر</th><th>الحالة</th><th>إجراء</th></tr>`;
         s.forEach(u => {
             const d = u.val();
-            html += `<tr><td>${d.name}</td><td>${d.tag || '-'}</td><td class="pass-highlight">${d.pass}</td></tr>`;
+            const isBanned = d.status === 'banned';
+            html += `<tr>
+                <td>${d.name || u.key}</td>
+                <td style="color:#f9ed69">${d.pass}</td>
+                <td style="color:${isBanned ? 'red' : '#28a745'}">${isBanned ? 'مغلق' : 'نشط'}</td>
+                <td>
+                    ${isBanned ? 
+                        `<button class="unban-btn" onclick="toggleBan('${u.key}', 'active')">تفعيل</button>` : 
+                        `<button class="ban-btn" onclick="toggleBan('${u.key}', 'banned')">إغلاق الحساب</button>`}
+                </td>
+            </tr>`;
         });
         html += `</table>`;
         document.getElementById('usersList').innerHTML = html;
     });
 
-    // 2. عرض المنشورات مع الحذف
+    function toggleBan(userId, newStatus) {
+        if(confirm(`هل أنت متأكد من تغيير حالة حساب ${userId}؟`)) {
+            db.ref('users/' + userId + '/status').set(newStatus);
+        }
+    }
+
+    // عرض المنشورات للحذف
     db.ref('posts').on('value', s => {
         let html = "";
         s.forEach(p => {
             const d = p.val();
-            html += `<div class="post-item">
-                <button class="del-btn" onclick="delPost('${p.key}')">حذف 🗑️</button>
-                <b>الناشر: ${d.u || d.name}</b>
-                <p>${d.t || d.text}</p>
-            </div>`;
-        });
-        document.getElementById('postsList').innerHTML = html || "لا توجد منشورات.";
-    });
-
-    // 3. مراقبة الدردشات لحظة بلحظة
-    db.ref('chats').on('value', s => {
-        let html = "";
-        s.forEach(room => {
-            html += `<div class="chat-room"><small style="color:#888">غرفة: ${room.key}</small>`;
-            room.forEach(msg => {
-                const m = msg.val();
-                html += `<div class="msg-line"><span class="sender">${m.sender}:</span> ${m.text}</div>`;
-            });
-            html += `</div>`;
-        });
-        document.getElementById('chatsList').innerHTML = html || "لا توجد دردشات حالياً.";
-    });
-
-    function delPost(id) {
-        if(confirm("هل تريد حذف هذا المنشور نهائياً؟")) db.ref('posts/' + id).remove();
-    }
-</script>
-
-</body>
-</html>
