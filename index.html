@@ -3,133 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل - إدارة الحساب</title>
+    <title>تواصل - نظام الدردشة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; text-align: center; color: #333; }
-        .box { background: white; max-width: 420px; margin: 30px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
-        button { width: 95%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
-        button:hover { background: #145dbf; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; text-align: center; }
+        .box { background: white; max-width: 450px; margin: 20px auto; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        .info-card { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e1e4e8; text-align: right; margin-bottom: 20px; }
-        .info-card p { margin: 8px 0; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        .info-card strong { color: #1877f2; }
-        #postList { text-align: right; max-width: 420px; margin: auto; }
-        .post { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        input { width: 85%; padding: 10px; margin: 5px; border-radius: 8px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; background: #1877f2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .chat-area { height: 300px; border: 1px solid #eee; overflow-y: auto; display: flex; flex-direction: column; padding: 10px; background: #f9f9f9; margin-bottom: 10px; border-radius: 10px; }
+        .msg { padding: 8px 12px; margin: 5px; border-radius: 15px; max-width: 70%; font-size: 14px; word-wrap: break-word; }
+        .msg.me { background: #1877f2; color: white; align-self: flex-start; }
+        .msg.him { background: #e4e6eb; color: black; align-self: flex-end; }
+        .friend-btn { width: 100%; text-align: right; background: #f0f2f5; color: black; margin: 5px 0; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
 
     <div id="authSection" class="box">
-        <h2 style="color: #1877f2;">تسجيل الدخول</h2>
+        <h2>تسجيل الدخول</h2>
         <input id="username" type="text" placeholder="اسم المستخدم">
         <input id="password" type="password" placeholder="كلمة المرور">
-        <button onclick="login()">دخول / إنشاء حساب</button>
+        <button onclick="login()">دخول</button>
     </div>
 
     <div id="appSection" class="hidden">
         <div class="box">
-            <h3 id="welcomeMsg">مرحباً</h3>
+            <h3>مرحباً <span id="myName"></span></h3>
+            <p style="font-size: 12px; color: #777;">الرمز الخاص بك: <b id="myTag"></b></p>
             
-            <div class="info-card">
-                <p><strong>👤 الاسم:</strong> <span id="displayName"></span></p>
-                <p><strong>🔑 كلمة السر:</strong> <span id="displayPass"></span></p>
-                <p><strong>🆔 الرمز (Tag):</strong> <span id="displayTag"></span></p>
-            </div>
-
-            <textarea id="postText" style="width: 90%; height: 70px; border-radius: 8px; border:1px solid #ddd; padding:10px;" placeholder="اكتب منشوراً جديداً..."></textarea>
-            <button onclick="sendPost()" style="margin-top: 10px;">نشر الآن</button>
-            <button onclick="logout()" style="background: #e4e6eb; color: #4b4f56; margin-top: 10px; font-size: 14px;">تسجيل خروج</button>
+            <hr>
+            <h4>إضافة صديق</h4>
+            <input id="friendTag" type="text" placeholder="ادخل الرمز (Tag) الخاص بصديقك">
+            <button onclick="addFriend()" style="background: #28a745;">إضافة</button>
+            
+            <hr>
+            <h4>أصدقائي</h4>
+            <div id="friendsList"></div>
         </div>
-        
-        <div id="postList"></div>
+    </div>
+
+    <div id="chatSection" class="box hidden">
+        <h3 id="chatWith">الدردشة</h3>
+        <div id="msgBox" class="chat-area"></div>
+        <div style="display:flex;">
+            <input id="msgInput" type="text" placeholder="اكتب رسالة...">
+            <button onclick="sendMsg()">إرسال</button>
+        </div>
+        <button onclick="closeChat()" style="background: #666; width: 100%; margin-top: 10px;">إغلاق</button>
     </div>
 
 <script>
-    // إعدادات Firebase
     const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let currentUser = null;
+    let myInfo = JSON.parse(localStorage.getItem('chatUser')) || null;
+    let currentChatFriend = null;
 
-    // فحص الدخول المسبق
-    const savedUser = localStorage.getItem('chatUser');
-    if (savedUser) {
-        currentUser = JSON.parse(savedUser);
-        startApp();
-    }
+    if (myInfo) startApp();
 
     function login() {
-        const name = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        if (!name || !pass) return alert("يرجى إدخال الاسم وكلمة السر");
-
-        db.ref('users/' + name).once('value', (s) => {
-            if (s.exists()) {
-                if (s.val().pass === pass) {
-                    currentUser = s.val();
-                    saveAndStart();
-                } else { alert("كلمة المرور غير صحيحة!"); }
-            } else {
-                const tag = name + "_" + Math.floor(1000 + Math.random() * 8999);
-                currentUser = { name: name, pass: pass, tag: tag };
-                db.ref('users/' + name).set(currentUser);
-                saveAndStart();
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        db.ref('users/' + u).once('value', s => {
+            if (s.exists() && s.val().pass === p) { myInfo = s.val(); }
+            else { 
+                const tag = u + "_" + Math.floor(1000 + Math.random() * 8999);
+                myInfo = { name: u, pass: p, tag: tag };
+                db.ref('users/' + u).set(myInfo);
+                db.ref('tags/' + tag).set(u);
             }
+            localStorage.setItem('chatUser', JSON.stringify(myInfo));
+            location.reload();
         });
-    }
-
-    function saveAndStart() {
-        localStorage.setItem('chatUser', JSON.stringify(currentUser));
-        startApp();
     }
 
     function startApp() {
         document.getElementById('authSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
-        
-        // عرض البيانات في البطاقة
-        document.getElementById('welcomeMsg').innerText = "أهلاً بك يا " + currentUser.name;
-        document.getElementById('displayName').innerText = currentUser.name;
-        document.getElementById('displayPass').innerText = currentUser.pass;
-        document.getElementById('displayTag').innerText = currentUser.tag;
-        
-        loadPosts();
+        document.getElementById('myName').innerText = myInfo.name;
+        document.getElementById('myTag').innerText = myInfo.tag;
+        loadFriends();
     }
 
-    function sendPost() {
-        const text = document.getElementById('postText').value;
-        if (!text) return;
-        db.ref('posts').push({
-            user: currentUser.name,
-            text: text,
-            tag: currentUser.tag,
-            time: Date.now()
-        });
-        document.getElementById('postText').value = "";
-    }
-
-    function loadPosts() {
-        db.ref('posts').limitToLast(20).on('child_added', (s) => {
-            const p = s.val();
-            const html = `
-                <div class="post">
-                    <strong style="color:#1877f2">${p.user}</strong> <small style="color:#999">@${p.tag}</small>
-                    <p style="margin-top:10px">${p.text}</p>
-                </div>`;
-            document.getElementById('postList').insertAdjacentHTML('afterbegin', html);
+    function addFriend() {
+        const tag = document.getElementById('friendTag').value;
+        db.ref('tags/' + tag).once('value', s => {
+            if (s.exists()) {
+                db.ref('friends/' + myInfo.tag + '/' + tag).set(s.val());
+                alert("تمت إضافة " + s.val());
+                document.getElementById('friendTag').value = "";
+            } else { alert("الرمز غير موجود!"); }
         });
     }
 
-    function logout() {
-        localStorage.removeItem('chatUser');
-        location.reload();
+    function loadFriends() {
+        db.ref('friends/' + myInfo.tag).on('value', s => {
+            const div = document.getElementById('friendsList');
+            div.innerHTML = "";
+            s.forEach(f => {
+                div.innerHTML += `<button class="friend-btn" onclick="openChat('${f.key}', '${f.val()}')">💬 ${f.val()}</button>`;
+            });
+        });
     }
+
+    function openChat(tag, name) {
+        currentChatFriend = { tag: tag, name: name };
+        document.getElementById('chatSection').classList.remove('hidden');
+        document.getElementById('chatWith').innerText = "دردشة مع " + name;
+        
+        // إنشاء معرّف فريد للغرفة بين الصديقين
+        const roomID = myInfo.tag < tag ? myInfo.tag + tag : tag + myInfo.tag;
+        
+        db.ref('chats/' + roomID).off(); // تنظيف المحادثة القديمة
+        document.getElementById('msgBox').innerHTML = "";
+        
+        db.ref('chats/' + roomID).on('child_added', s => {
+            const m = s.val();
+            const cls = m.sender === myInfo.tag ? 'me' : 'him';
+            document.getElementById('msgBox').innerHTML += `<div class="msg ${cls}">${m.text}</div>`;
+            document.getElementById('msgBox').scrollTop = 9999;
+        });
+    }
+
+    function sendMsg() {
+        const txt = document.getElementById('msgInput').value;
+        if (!txt || !currentChatFriend) return;
+        const roomID = myInfo.tag < currentChatFriend.tag ? myInfo.tag + currentChatFriend.tag : currentChatFriend.tag + myInfo.tag;
+        db.ref('chats/' + roomID).push({ sender: myInfo.tag, text: txt });
+        document.getElementById('msgInput').value = "";
+    }
+
+    function closeChat() { document.getElementById('chatSection').classList.add('hidden'); }
 </script>
 </body>
 </html>
-
-
