@@ -3,94 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل - النسخة الآمنة</title>
+    <title>تواصل - المنصة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #1877f2; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
-        .box { background: white; max-width: 500px; margin: 15px auto; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; }
+        .header { background: #1877f2; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; font-weight: bold; }
+        .container { max-width: 500px; margin: auto; padding: 10px; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; background: #f5f6f7; }
+        button { background: #1877f2; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .post { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; }
+        .post-user { color: #1c1e21; font-weight: bold; margin-bottom: 5px; display: block; }
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
+        .nav-item { flex: 1; text-align: center; line-height: 55px; cursor: pointer; color: #65676b; font-weight: bold; }
+        .active { color: #1877f2; border-bottom: 3px solid #1877f2; }
         .hidden { display: none !important; }
-        input, textarea { width: 92%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; padding: 10px 0; }
-        .nav div { flex: 1; text-align: center; cursor: pointer; color: #666; font-size: 13px; }
-        .active { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="authPage" class="box" style="margin-top: 50px;">
-        <h2>تسجيل الدخول</h2>
+<div id="authArea" class="container">
+    <div class="card" style="margin-top: 50px; text-align: center;">
+        <h2 style="color: #1877f2;">دخول تواصل</h2>
         <input id="uInp" type="text" placeholder="الاسم">
         <input id="pInp" type="password" placeholder="كلمة المرور">
-        <button onclick="auth()">دخول</button>
+        <button onclick="login()">دخول سريع</button>
     </div>
+</div>
 
-    <div id="mainApp" class="hidden">
+<div id="appArea" class="hidden">
+    <div class="header">منصة تواصل</div>
+    <div class="container">
         <div id="p-home" class="page">
-            <div class="box">
-                <textarea id="postTxt" placeholder="بماذا تفكر؟"></textarea>
-                <button onclick="sendPost()">نشر</button>
+            <div class="card">
+                <textarea id="pTxt" placeholder="ماذا يدور في ذهنك؟"></textarea>
+                <button onclick="post()">نشر الآن</button>
             </div>
             <div id="feed"></div>
         </div>
-
         <div id="p-me" class="page hidden">
-            <div class="box">
-                <h3>حسابي</h3>
-                <p id="m-info"></p>
-                <button onclick="logout()" style="background:#666">خروج</button>
+            <div class="card" style="text-align: center;">
+                <h3 id="uName"></h3>
+                <button onclick="logout()" style="background: #e4e6eb; color: #050505;">تسجيل الخروج</button>
             </div>
         </div>
-
-        <div class="nav">
-            <div id="n-home" class="active" onclick="tab('home')">🏠 الرئيسية</div>
-            <div id="n-me" onclick="tab('me')">⚙️ حسابي</div>
-        </div>
     </div>
+    <div class="nav-bottom">
+        <div class="nav-item active" onclick="tab('home')">🏠 الرئيسية</div>
+        <div class="nav-item" onclick="tab('me')">⚙️ حسابي</div>
+    </div>
+</div>
 
 <script>
-    const conf = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(conf);
+    const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(config);
     const db = firebase.database();
 
-    let me = JSON.parse(localStorage.getItem('user'));
+    let user = JSON.parse(localStorage.getItem('app_user'));
 
-    // دالة الدخول مع فحص الحظر
-    function auth() {
+    function login() {
         const u = document.getElementById('uInp').value;
         const p = document.getElementById('pInp').value;
+        if(!u || !p) return;
         db.ref('users/'+u).once('value', s => {
-            if(s.exists()){
-                const userData = s.val();
-                if(userData.status === 'banned') return alert("❌ هذا الحساب مغلق من قبل الإدارة");
-                if(userData.pass === p) { me = userData; loginSuccess(); }
-                else alert("كلمة السر خطأ");
-            } else {
-                const t = u + "_" + Math.floor(1000+Math.random()*9000);
-                me = { name:u, pass:p, tag:t, status:'active' };
-                db.ref('users/'+u).set(me);
-                loginSuccess();
-            }
+            const d = s.val();
+            if(d && d.status === 'banned') return alert("❌ حسابك محظور");
+            if(d && d.pass !== p) return alert("❌ كلمة سر خطأ");
+            
+            user = d || { name: u, pass: p, status: 'active' };
+            if(!d) db.ref('users/'+u).set(user);
+            localStorage.setItem('app_user', JSON.stringify(user));
+            location.reload();
         });
     }
 
-    function loginSuccess() {
-        localStorage.setItem('user', JSON.stringify(me));
-        location.reload();
-    }
-
-    // --- ميزة الرقابة اللحظية (الشرطي البرمجي) ---
-    if(me) {
-        db.ref('users/' + me.name + '/status').on('value', s => {
-            if(s.val() === 'banned') {
-                alert("🛑 تم إغلاق حسابك الآن من قبل الشركة!");
+    if(user) {
+        db.ref('users/'+user.name).on('value', s => {
+            if(s.val() && s.val().status === 'banned') {
+                alert("🛑 تم حظر حسابك من قبل الإدارة");
                 logout();
             } else {
-                document.getElementById('authPage').classList.add('hidden');
-                document.getElementById('mainApp').classList.remove('hidden');
-                document.getElementById('m-info').innerText = `الاسم: ${me.name} | الرمز: ${me.tag}`;
+                document.getElementById('authArea').classList.add('hidden');
+                document.getElementById('appArea').classList.remove('hidden');
+                document.getElementById('uName').innerText = user.name;
                 loadPosts();
             }
         });
@@ -99,18 +95,24 @@
     function tab(n) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
         document.getElementById('p-'+n).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
     }
 
-    function sendPost() {
-        const t = document.getElementById('postTxt').value;
-        if(t) db.ref('posts').push({ u:me.name, t:t });
-        document.getElementById('postTxt').value = "";
+    function post() {
+        const t = document.getElementById('pTxt').value;
+        if(t) db.ref('posts').push({ u: user.name, t: t });
+        document.getElementById('pTxt').value = "";
     }
 
     function loadPosts() {
-        db.ref('posts').on('child_added', s => {
-            const d = s.val();
-            document.getElementById('feed').insertAdjacentHTML('afterbegin', `<div class="box"><b>${d.u}</b>: ${d.t}</div>`);
+        db.ref('posts').limitToLast(20).on('value', s => {
+            const feed = document.getElementById('feed');
+            feed.innerHTML = "";
+            s.forEach(p => {
+                const d = p.val();
+                feed.insertAdjacentHTML('afterbegin', `<div class="post"><span class="post-user">@${d.u}</span>${d.t}</div>`);
+            });
         });
     }
 
