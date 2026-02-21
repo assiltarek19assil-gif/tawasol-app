@@ -3,38 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تواصل الاجتماعية</title>
+    <title>منصة تواصل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --main: #1877f2; --bg: #f0f2f5; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
         .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
         .container { max-width: 500px; margin: auto; padding: 10px; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
         button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
-        
-        /* المنشورات والإعجاب */
         .post { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; }
-        .post-user { font-weight: bold; color: var(--main); }
-        .like-btn { background: #f0f2f5; color: #65676b; width: auto; padding: 6px 15px; margin-top: 10px; border-radius: 20px; font-size: 14px; border: none; cursor: pointer; }
-        .liked { color: var(--main); background: #e7f3ff; }
-
-        /* الأصدقاء والدردشة */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .chat-win { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1000; display: flex; flex-direction: column; }
-        .chat-head { background: var(--main); color: white; padding: 15px; display: flex; justify-content: space-between; }
-        .msgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; }
-        .msg { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; }
-        .me { background: #dcf8c6; align-self: flex-start; }
-        .him { background: white; align-self: flex-end; }
-
-        /* التنقل */
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
-        .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 22px; }
+        .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 22px; color: #65676b; }
         .active { color: var(--main); border-bottom: 3px solid var(--main); }
         .hidden { display: none !important; }
+        /* نظام الدردشة */
+        .chat-win { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1000; display: flex; flex-direction: column; }
+        .msgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; }
+        .m { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; }
+        .me { background: #dcf8c6; align-self: flex-start; }
+        .him { background: white; align-self: flex-end; }
     </style>
 </head>
 <body>
@@ -52,23 +42,15 @@
     <div class="header">منصة تواصل</div>
     <div class="container">
         <div id="p-home" class="page">
-            <div class="card"><textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea><button onclick="post()">نشر</button></div>
+            <div class="card"><textarea id="pTxt" placeholder="ماذا يدور في ذهنك؟"></textarea><button onclick="post()">نشر</button></div>
             <div id="feed"></div>
         </div>
         <div id="p-friends" class="page hidden">
-            <div class="card">
-                <h3>👥 الأصدقاء</h3>
-                <input id="fInp" type="text" placeholder="اسم الصديق...">
-                <button onclick="sendReq()">إرسال طلب</button>
-            </div>
-            <div class="card"><h4>طلبات بانتظارك</h4><div id="reqs"></div></div>
-            <div class="card"><h4>أصدقائي</h4><div id="flist"></div></div>
+            <div class="card"><h3>👥 الأصدقاء</h3><input id="fInp" placeholder="اسم الصديق"><button onclick="sendReq()">طلب صداقة</button></div>
+            <div id="reqs"></div><div id="flist"></div>
         </div>
         <div id="p-me" class="page hidden">
-            <div class="card" style="text-align: center;">
-                <h3 id="uDisp"></h3><p id="tDisp" style="color:var(--main);"></p>
-                <button onclick="logout()" style="background:#eee; color:#333;">خروج</button>
-            </div>
+            <div class="card" style="text-align: center;"><h3 id="uDisp"></h3><button onclick="logout()">خروج</button></div>
         </div>
     </div>
     <div class="nav">
@@ -79,24 +61,26 @@
 </div>
 
 <div id="cw" class="chat-win hidden">
-    <div class="chat-head"><span id="ct"></span><span onclick="closeC()" style="cursor:pointer">✖</span></div>
+    <div style="background:var(--main);color:white;padding:15px;display:flex;justify-content:space-between;"><span id="ct"></span><span onclick="closeC()">✖</span></div>
     <div id="mb" class="msgs"></div>
-    <div style="padding:10px; display:flex; gap:5px; background:white;"><input id="mi" style="margin:0"><button onclick="sendM()" style="width:70px">إرسال</button></div>
+    <div style="padding:10px;display:flex;gap:5px;"><input id="mi" style="margin:0"><button onclick="sendM()" style="width:70px">إرسال</button></div>
 </div>
 
 <script>
     const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(config);
+    firebase.initializeApp(config);
     const db = firebase.database();
     let user = JSON.parse(localStorage.getItem('app_user'));
     let ac = "";
 
     function login() {
         const u = document.getElementById('uInp').value, p = document.getElementById('pInp').value;
-        if(!u || !p) return alert("املأ البيانات");
+        if(!u || !p) return;
         db.ref('users/'+u).once('value', s => {
-            user = s.val() || { name:u, pass:p, status:'active', tag:u+"#"+Math.floor(1000+Math.random()*9000) };
-            if(!s.exists()) db.ref('users/'+u).set(user);
+            const d = s.val();
+            if(d && d.status==='banned') return alert("أنت محظور من الإدارة");
+            user = d || { name:u, pass:p, status:'active' };
+            if(!d) db.ref('users/'+u).set(user);
             localStorage.setItem('app_user', JSON.stringify(user));
             location.reload();
         });
@@ -106,7 +90,6 @@
         document.getElementById('authArea').classList.add('hidden');
         document.getElementById('appArea').classList.remove('hidden');
         document.getElementById('uDisp').innerText = user.name;
-        document.getElementById('tDisp').innerText = user.tag;
         loadP(); loadR(); loadF();
     }
 
@@ -119,28 +102,14 @@
 
     function post() {
         const t = document.getElementById('pTxt').value;
-        if(t) db.ref('posts').push({ u:user.name, t:t, likes:0 });
+        if(t) db.ref('posts').push({ u:user.name, t:t, time: Date.now() });
         document.getElementById('pTxt').value = "";
     }
 
     function loadP() {
         db.ref('posts').on('value', s => {
             const f = document.getElementById('feed'); f.innerHTML = "";
-            s.forEach(p => {
-                const d = p.val(); const lk = d.likedBy && d.likedBy[user.name];
-                f.insertAdjacentHTML('afterbegin', `<div class="post"><span class="post-user">@${d.u}</span><br>${d.t}<br><button class="like-btn ${lk?'liked':''}" onclick="toggleL('${p.key}')">👍 ${d.likes||0}</button></div>`);
-            });
-        });
-    }
-
-    function toggleL(id) {
-        db.ref('posts/'+id).transaction(p => {
-            if(p) {
-                if(!p.likedBy) p.likedBy = {};
-                if(p.likedBy[user.name]) { p.likes--; delete p.likedBy[user.name]; }
-                else { p.likes = (p.likes||0)+1; p.likedBy[user.name]=true; }
-            }
-            return p;
+            s.forEach(p => { f.insertAdjacentHTML('afterbegin', `<div class="post"><b>@${p.val().u}</b><br>${p.val().t}</div>`); });
         });
     }
 
@@ -152,7 +121,7 @@
     function loadR() {
         db.ref('requests/'+user.name).on('value', s => {
             const l = document.getElementById('reqs'); l.innerHTML = "";
-            s.forEach(r => { l.innerHTML += `<div class="item-row"><span>👤 ${r.key}</span><button onclick="accF('${r.key}')" style="width:auto; padding:5px">قبول</button></div>`; });
+            s.forEach(r => { l.innerHTML += `<div class="card">${r.key} <button onclick="accF('${r.key}')">قبول</button></div>`; });
         });
     }
 
@@ -165,7 +134,7 @@
     function loadF() {
         db.ref('users/'+user.name+'/friends').on('value', s => {
             const l = document.getElementById('flist'); l.innerHTML = "";
-            s.forEach(f => { l.innerHTML += `<div class="item-row"><span>🟢 ${f.key}</span><button onclick="openC('${f.key}')" style="width:auto; padding:5px; background:#2ed573">دردشة</button></div>`; });
+            s.forEach(f => { l.innerHTML += `<div class="card">👤 ${f.key} <button onclick="openC('${f.key}')" style="background:#2ed573">دردشة</button></div>`; });
         });
     }
 
@@ -175,7 +144,7 @@
         const r = user.name < t ? user.name+"_"+t : t+"_"+user.name;
         db.ref('chats/'+r).on('value', s => {
             const b = document.getElementById('mb'); b.innerHTML = "";
-            s.forEach(m => { const d = m.val(); b.innerHTML += `<div class="msg ${d.s===user.name?'me':'him'}">${d.t}</div>`; });
+            s.forEach(m => { b.innerHTML += `<div class="m ${m.val().s===user.name?'me':'him'}">${m.val().t}</div>`; });
             b.scrollTop = b.scrollHeight;
         });
     }
@@ -187,7 +156,4 @@
     }
 
     function closeC() { document.getElementById('cw').classList.add('hidden'); }
-    function logout() { localStorage.clear(); location.reload(); }
-</script>
-</body>
-</html>
+    function logout
