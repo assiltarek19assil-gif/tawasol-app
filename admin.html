@@ -2,99 +2,164 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم الشركة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تواصل - المنصة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; color: #1c1e21; }
-        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #1877f2; }
-        h2 { border-bottom: 2px solid #1877f2; padding-bottom: 10px; font-size: 18px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        th { background: #f8f9fa; }
-        .ban-btn { background: #ff4757; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .unban-btn { background: #2ed573; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .item { padding: 10px; border-bottom: 1px solid #eee; position: relative; }
-        .chat-box { background: #eef2f7; padding: 10px; border-radius: 8px; margin-top: 10px; border-right: 4px solid #1877f2; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 60px; }
+        .header { background: #1877f2; color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; font-weight: bold; }
+        .container { max-width: 500px; margin: auto; padding: 10px; }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; background: #f5f6f7; }
+        button { background: #1877f2; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .post { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; }
+        .post-user { color: #1c1e21; font-weight: bold; }
+        .user-tag { color: #65676b; font-size: 12px; font-weight: normal; }
+        
+        /* نظام الدردشة */
+        .chat-window { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1000; display: flex; flex-direction: column; }
+        .chat-header { background: #1877f2; color: white; padding: 15px; display: flex; justify-content: space-between; }
+        .messages { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; }
+        .msg { padding: 8px 12px; margin: 5px; border-radius: 15px; max-width: 70%; font-size: 14px; }
+        .me { background: #dcf8c6; align-self: flex-start; }
+        .him { background: white; align-self: flex-end; }
+
+        .nav-bottom { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
+        .nav-item { flex: 1; text-align: center; line-height: 55px; cursor: pointer; color: #65676b; font-weight: bold; }
+        .active { color: #1877f2; border-bottom: 3px solid #1877f2; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <h1>🛡️ لوحة تحكم شركة تواصل</h1>
-
-    <div class="card">
-        <h2>👤 إدارة المستخدمين والحظر</h2>
-        <table>
-            <thead><tr><th>المستخدم</th><th>كلمة السر</th><th>الحالة</th><th>الإجراء</th></tr></thead>
-            <tbody id="usersList"></tbody>
-        </table>
+<div id="authArea" class="container">
+    <div class="card" style="margin-top: 50px; text-align: center;">
+        <h2 style="color: #1877f2;">دخول تواصل</h2>
+        <input id="uInp" type="text" placeholder="الاسم">
+        <input id="pInp" type="password" placeholder="كلمة المرور">
+        <button onclick="login()">دخول سريع</button>
     </div>
+</div>
 
-    <div class="card">
-        <h2>📝 المنشورات الحالية</h2>
-        <div id="postsList"></div>
+<div id="appArea" class="hidden">
+    <div class="header">منصة تواصل</div>
+    <div class="container">
+        <div id="p-home" class="page">
+            <div class="card">
+                <textarea id="pTxt" placeholder="ماذا يدور في ذهنك؟"></textarea>
+                <button onclick="post()">نشر الآن</button>
+            </div>
+            <div id="feed"></div>
+        </div>
+        <div id="p-chat" class="page hidden">
+            <div class="card">
+                <h3>ابدأ محادثة</h3>
+                <input id="targetInp" type="text" placeholder="اسم الصديق">
+                <button onclick="startChat()">تحدث الآن</button>
+            </div>
+        </div>
+        <div id="p-me" class="page hidden">
+            <div class="card" style="text-align: center;">
+                <h3 id="uNameDisp"></h3>
+                <p id="uTagDisp" style="color: #1877f2; font-weight: bold;"></p>
+                <button onclick="logout()" style="background: #e4e6eb; color: #050505;">تسجيل الخروج</button>
+            </div>
+        </div>
     </div>
+    <div class="nav-bottom">
+        <div class="nav-item active" onclick="tab('home')">🏠 الرئيسية</div>
+        <div class="nav-item" onclick="tab('chat')">💬 الدردشة</div>
+        <div class="nav-item" onclick="tab('me')">⚙️ حسابي</div>
+    </div>
+</div>
 
-    <div class="card">
-        <h2>💬 مراقبة الدردشات المباشرة</h2>
-        <div id="chatsList"></div>
+<div id="chatWin" class="chat-window hidden">
+    <div class="chat-header"><span id="chatTitle"></span> <span onclick="closeChat()">✖</span></div>
+    <div id="msgBox" class="messages"></div>
+    <div style="padding: 10px; display: flex; gap: 5px;">
+        <input id="mInp" style="margin:0" placeholder="رسالة...">
+        <button onclick="sendMsg()" style="width: 80px;">إرسال</button>
     </div>
+</div>
 
 <script>
-    // تهيئة Firebase
     const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) { firebase.initializeApp(config); }
+    firebase.initializeApp(config);
     const db = firebase.database();
+    let user = JSON.parse(localStorage.getItem('app_user'));
+    let activeChat = "";
 
-    // 1. جلب المستخدمين
-    db.ref('users').on('value', s => {
-        const list = document.getElementById('usersList');
-        list.innerHTML = "";
-        s.forEach(u => {
-            const d = u.val();
-            const isBanned = d.status === 'banned';
-            list.innerHTML += `<tr>
-                <td>${d.name || u.key}</td>
-                <td>${d.pass || '---'}</td>
-                <td style="color:${isBanned?'red':'green'}">${isBanned?'محظور':'نشط'}</td>
-                <td><button class="${isBanned?'unban-btn':'ban-btn'}" onclick="setBan('${u.key}', ${!isBanned})">${isBanned?'تفعيل':'حظر'}</button></td>
-            </tr>`;
+    function login() {
+        const u = document.getElementById('uInp').value;
+        const p = document.getElementById('pInp').value;
+        if(!u || !p) return;
+        db.ref('users/'+u).once('value', s => {
+            const d = s.val();
+            if(d && d.status === 'banned') return alert("❌ حسابك محظور");
+            if(d && d.pass !== p) return alert("❌ كلمة سر خطأ");
+            user = d || { name: u, pass: p, status: 'active', tag: u+"#"+Math.floor(1000+Math.random()*9000) };
+            if(!d) db.ref('users/'+u).set(user);
+            localStorage.setItem('app_user', JSON.stringify(user));
+            location.reload();
         });
-    });
-
-    // 2. جلب المنشورات
-    db.ref('posts').on('value', s => {
-        const list = document.getElementById('postsList');
-        list.innerHTML = "";
-        s.forEach(p => {
-            const d = p.val();
-            list.innerHTML += `<div class="item">
-                <button onclick="db.ref('posts/${p.key}').remove()" style="float:left; color:red; background:none; border:none; cursor:pointer;">حذف 🗑️</button>
-                <b>${d.u || d.name}:</b> ${d.t || d.text}
-            </div>`;
-        });
-    });
-
-    // 3. جلب الدردشات
-    db.ref('chats').on('value', s => {
-        const list = document.getElementById('chatsList');
-        list.innerHTML = "";
-        if(!s.exists()) list.innerHTML = "لا توجد محادثات نشطة.";
-        s.forEach(room => {
-            let html = `<div class="chat-box"><small style="color:gray">غرفة: ${room.key}</small>`;
-            room.forEach(msg => {
-                const m = msg.val();
-                html += `<div><b>${m.sender}:</b> ${m.text}</div>`;
-            });
-            list.innerHTML += html + `</div>`;
-        });
-    });
-
-    function setBan(id, ban) {
-        db.ref('users/' + id + '/status').set(ban ? 'banned' : 'active');
     }
-</script>
 
+    if(user) {
+        db.ref('users/'+user.name).on('value', s => {
+            if(s.val() && s.val().status === 'banned') logout();
+            document.getElementById('authArea').classList.add('hidden');
+            document.getElementById('appArea').classList.remove('hidden');
+            document.getElementById('uNameDisp').innerText = user.name;
+            document.getElementById('uTagDisp').innerText = user.tag;
+            loadPosts();
+        });
+    }
+
+    function tab(n) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById('p-'+n).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    function post() {
+        const t = document.getElementById('pTxt').value;
+        if(t) db.ref('posts').push({ u: user.name, tag: user.tag, t: t });
+        document.getElementById('pTxt').value = "";
+    }
+
+    function loadPosts() {
+        db.ref('posts').on('value', s => {
+            const feed = document.getElementById('feed'); feed.innerHTML = "";
+            s.forEach(p => { const d = p.val(); feed.insertAdjacentHTML('afterbegin', `<div class="post"><span class="post-user">${d.u}</span> <span class="user-tag">${d.tag}</span><br>${d.t}</div>`); });
+        });
+    }
+
+    function startChat() { 
+        activeChat = document.getElementById('targetInp').value; 
+        if(activeChat) { document.getElementById('chatWin').classList.remove('hidden'); document.getElementById('chatTitle').innerText = activeChat; loadMsgs(); }
+    }
+    
+    function loadMsgs() {
+        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
+        db.ref('chats/'+room).on('value', s => {
+            const box = document.getElementById('msgBox'); box.innerHTML = "";
+            s.forEach(m => { const d = m.val(); box.innerHTML += `<div class="msg ${d.sender===user.name?'me':'him'}">${d.text}</div>`; });
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    function sendMsg() {
+        const txt = document.getElementById('mInp').value;
+        if(!txt) return;
+        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
+        db.ref('chats/'+room).push({ sender: user.name, text: txt });
+        document.getElementById('mInp').value = "";
+    }
+
+    function closeChat() { document.getElementById('chatWin').classList.add('hidden'); }
+    function logout() { localStorage.clear(); location.reload(); }
+</script>
 </body>
 </html>
