@@ -62,6 +62,40 @@
             db.ref('posts/' + id).remove();
         }
     }
-</script>
+</script>// --- قسم مراقبة الدردشات للشركة ---
+
+db.ref('chats').on('value', (snapshot) => {
+    const chatContainer = document.getElementById('allChatsBox');
+    if (!chatContainer) {
+        // إذا لم يكن العنصر موجوداً، سنقوم بإنشائه في الصفحة
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="box" style="margin-top: 20px; border: 2px solid #e74c3c;">
+                <h3 style="color: #e74c3c;">💬 رقابة الدردشات المباشرة</h3>
+                <div id="allChatsBox" style="text-align: right; max-height: 500px; overflow-y: auto;"></div>
+            </div>
+        `);
+    }
+    
+    let html = "";
+    if (snapshot.exists()) {
+        snapshot.forEach((room) => {
+            const roomID = room.key;
+            html += `<div style="background: #fff; padding: 10px; margin-bottom: 15px; border-radius: 8px; border-right: 5px solid #3498db;">
+                        <p style="font-size: 12px; color: #7f8c8d;">معرف الغرفة: ${roomID}</p>`;
+            
+            room.forEach((msg) => {
+                const data = msg.val();
+                html += `<div style="margin: 5px 0; padding: 5px; border-bottom: 1px dashed #eee;">
+                            <span style="color: #2980b9; font-weight: bold;">[${data.sender}]:</span> 
+                            <span>${data.text}</span>
+                         </div>`;
+            });
+            html += `</div>`;
+        });
+    } else {
+        html = "<p>لا توجد دردشات نشطة حالياً.</p>";
+    }
+    document.getElementById('allChatsBox').innerHTML = html;
+});
 </body>
 </html>
