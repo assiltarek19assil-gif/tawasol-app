@@ -2,85 +2,59 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم الشركة - الإدارة العليا</title>
+    <title>التحكم الكامل - شركة تواصل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --danger: #ff4757; --success: #2ed573; --dark: #2f3542; --light: #f1f2f6; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
-        header { background: var(--dark); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: #57606f; }
-        .ban-btn { background: var(--danger); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        .unban-btn { background: var(--success); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; }
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .banned { background: #ffe0e3; color: var(--danger); }
-        .active { background: #e3ffef; color: var(--success); }
+        :root { --danger: #ff4757; --success: #2ed573; --dark: #1e272e; --accent: #3742fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #f1f2f6; margin: 0; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; }
+        header { background: var(--dark); color: white; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); height: fit-content; }
+        .full-width { grid-column: 1 / -1; }
+        h2 { color: var(--dark); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; font-size: 1.2rem; }
+        
+        /* الجداول */
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 14px; }
+        .ban-btn { background: var(--danger); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+        .unban-btn { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+
+        /* المنشورات والدردشة */
+        .scroll-area { max-height: 400px; overflow-y: auto; padding-right: 5px; }
+        .item { background: #f8f9fa; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-right: 4px solid var(--accent); position: relative; }
+        .del-post { position: absolute; left: 10px; top: 10px; color: var(--danger); cursor: pointer; font-weight: bold; border: 1px solid var(--danger); padding: 2px 8px; border-radius: 5px; font-size: 11px; }
+        .chat-room { background: #eef2f7; border-right-color: #2ed573; margin-bottom: 15px; padding: 10px; border-radius: 8px; }
+        .msg { font-size: 13px; margin: 5px 0; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+        .sender { font-weight: bold; color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>🛡️ لوحة التحكم الإدارية</h1>
-        <p>مراقبة المستخدمين وإدارة الصلاحيات</p>
+        <h1>🛡️ مركز التحكم بشركة تواصل</h1>
+        <p>الإدارة العليا: حسابات | منشورات | دردشات</p>
     </header>
 
-    <div class="card">
-        <h2>👥 قائمة المستخدمين</h2>
-        <table id="userTable">
-            <thead>
-                <tr>
-                    <th>المستخدم</th>
-                    <th>كلمة السر</th>
-                    <th>الحالة</th>
-                    <th>الإجراء</th>
-                </tr>
-            </thead>
-            <tbody id="usersList">
-                <tr><td colspan="4">جاري مزامنة البيانات...</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+    <div class="grid">
+        <div class="card full-width">
+            <h2>👥 إدارة المستخدمين والحظر</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>المستخدم</th>
+                        <th>كلمة السر</th>
+                        <th>الحالة</th>
+                        <th>الإجراء</th>
+                    </tr>
+                </thead>
+                <tbody id="usersList"></tbody>
+            </table>
+        </div>
 
-<script>
-    const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // جلب البيانات مع معالجة الأخطاء
-    db.ref('users').on('value', s => {
-        const list = document.getElementById('usersList');
-        list.innerHTML = "";
-        if(!s.exists()) { list.innerHTML = "<tr><td colspan='4'>لا يوجد مستخدمين بعد</td></tr>"; return; }
-        
-        s.forEach(u => {
-            const d = u.val();
-            const isBanned = d.status === 'banned';
-            list.innerHTML += `
-                <tr>
-                    <td><b>${d.name || u.key}</b></td>
-                    <td style="font-family: monospace;">${d.pass || '----'}</td>
-                    <td><span class="status-badge ${isBanned ? 'banned' : 'active'}">${isBanned ? 'محظور' : 'نشط'}</span></td>
-                    <td>
-                        <button class="${isBanned ? 'unban-btn' : 'ban-btn'}" onclick="setBan('${u.key}', ${!isBanned})">
-                            ${isBanned ? 'تفعيل الحساب' : 'إغلاق الحساب'}
-                        </button>
-                    </td>
-                </tr>`;
-        });
-    });
-
-    function setBan(uid, ban) {
-        const status = ban ? 'banned' : 'active';
-        db.ref('users/' + uid + '/status').set(status)
-          .then(() => alert("تم تحديث حالة الحساب بنجاح"))
-          .catch(e => alert("خطأ: " + e.message));
-    }
-</script>
-</body>
-</html>
+        <div class="card">
+            <h2>📝 مراقبة وحذف المنشورات</h2>
+            <div class="scroll-area" id="postsList"></div>
+        </div>
