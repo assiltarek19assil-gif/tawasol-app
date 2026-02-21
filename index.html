@@ -3,24 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل - حسابي السحابي</title>
+    <title>تواصل - إدارة الحساب</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; text-align: center; }
-        .box { background: white; max-width: 400px; margin: 50px auto; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
-        button { width: 95%; padding: 10px; background: #1877f2; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; text-align: center; color: #333; }
+        .box { background: white; max-width: 420px; margin: 30px auto; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button { width: 95%; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        button:hover { background: #145dbf; }
         .hidden { display: none; }
-        #postList { text-align: right; max-width: 400px; margin: auto; }
-        .post { background: white; padding: 10px; margin: 10px 0; border-radius: 8px; border-right: 5px solid #1877f2; }
+        .info-card { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #e1e4e8; text-align: right; margin-bottom: 20px; }
+        .info-card p { margin: 8px 0; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .info-card strong { color: #1877f2; }
+        #postList { text-align: right; max-width: 420px; margin: auto; }
+        .post { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
 
     <div id="authSection" class="box">
-        <h2>تسجيل الدخول</h2>
-        <p>ادخل اسمك وكلمة سرك لتجد بياناتك من أي مكان</p>
+        <h2 style="color: #1877f2;">تسجيل الدخول</h2>
         <input id="username" type="text" placeholder="اسم المستخدم">
         <input id="password" type="password" placeholder="كلمة المرور">
         <button onclick="login()">دخول / إنشاء حساب</button>
@@ -29,23 +32,30 @@
     <div id="appSection" class="hidden">
         <div class="box">
             <h3 id="welcomeMsg">مرحباً</h3>
-            <p id="userTag" style="color: blue;"></p>
-            <textarea id="postText" style="width: 90%; height: 60px;" placeholder="اكتب شيئاً..."></textarea>
-            <button onclick="sendPost()">نشر</button>
-            <button onclick="logout()" style="background: #666; margin-top: 10px;">خروج</button>
+            
+            <div class="info-card">
+                <p><strong>👤 الاسم:</strong> <span id="displayName"></span></p>
+                <p><strong>🔑 كلمة السر:</strong> <span id="displayPass"></span></p>
+                <p><strong>🆔 الرمز (Tag):</strong> <span id="displayTag"></span></p>
+            </div>
+
+            <textarea id="postText" style="width: 90%; height: 70px; border-radius: 8px; border:1px solid #ddd; padding:10px;" placeholder="اكتب منشوراً جديداً..."></textarea>
+            <button onclick="sendPost()" style="margin-top: 10px;">نشر الآن</button>
+            <button onclick="logout()" style="background: #e4e6eb; color: #4b4f56; margin-top: 10px; font-size: 14px;">تسجيل خروج</button>
         </div>
+        
         <div id="postList"></div>
     </div>
 
 <script>
-    // ربط التطبيق بقاعدة البيانات (Firebase)
+    // إعدادات Firebase
     const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     let currentUser = null;
 
-    // فحص إذا كان المستخدم قد سجل دخوله سابقاً على هذا المتصفح
+    // فحص الدخول المسبق
     const savedUser = localStorage.getItem('chatUser');
     if (savedUser) {
         currentUser = JSON.parse(savedUser);
@@ -53,18 +63,17 @@
     }
 
     function login() {
-        const name = document.getElementById('username').value;
-        const pass = document.getElementById('password').value;
-        if (!name || !pass) return alert("من فضلك اكمل البيانات");
+        const name = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        if (!name || !pass) return alert("يرجى إدخال الاسم وكلمة السر");
 
         db.ref('users/' + name).once('value', (s) => {
             if (s.exists()) {
                 if (s.val().pass === pass) {
                     currentUser = s.val();
                     saveAndStart();
-                } else { alert("كلمة المرور خاطئة!"); }
+                } else { alert("كلمة المرور غير صحيحة!"); }
             } else {
-                // إنشاء حساب جديد في السحابة
                 const tag = name + "_" + Math.floor(1000 + Math.random() * 8999);
                 currentUser = { name: name, pass: pass, tag: tag };
                 db.ref('users/' + name).set(currentUser);
@@ -81,8 +90,13 @@
     function startApp() {
         document.getElementById('authSection').classList.add('hidden');
         document.getElementById('appSection').classList.remove('hidden');
-        document.getElementById('welcomeMsg').innerText = "مرحباً يا " + currentUser.name;
-        document.getElementById('userTag').innerText = "الرمز الخاص بك: " + currentUser.tag;
+        
+        // عرض البيانات في البطاقة
+        document.getElementById('welcomeMsg').innerText = "أهلاً بك يا " + currentUser.name;
+        document.getElementById('displayName').innerText = currentUser.name;
+        document.getElementById('displayPass').innerText = currentUser.pass;
+        document.getElementById('displayTag').innerText = currentUser.tag;
+        
         loadPosts();
     }
 
@@ -92,15 +106,20 @@
         db.ref('posts').push({
             user: currentUser.name,
             text: text,
-            tag: currentUser.tag
+            tag: currentUser.tag,
+            time: Date.now()
         });
         document.getElementById('postText').value = "";
     }
 
     function loadPosts() {
-        db.ref('posts').on('child_added', (s) => {
+        db.ref('posts').limitToLast(20).on('child_added', (s) => {
             const p = s.val();
-            const html = `<div class="post"><b>${p.user}:</b> <p>${p.text}</p></div>`;
+            const html = `
+                <div class="post">
+                    <strong style="color:#1877f2">${p.user}</strong> <small style="color:#999">@${p.tag}</small>
+                    <p style="margin-top:10px">${p.text}</p>
+                </div>`;
             document.getElementById('postList').insertAdjacentHTML('afterbegin', html);
         });
     }
@@ -112,4 +131,5 @@
 </script>
 </body>
 </html>
+
 
