@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تواصل - النسخة الكاملة</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --fb-blue: #1877f2; --chat-green: #00796b; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; direction: rtl; }
+        .hidden { display: none !important; }
+        header { background: var(--fb-blue); color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .main { max-width: 500px; margin: 15px auto; padding: 0 10px; }
+        .card { background: white; border-radius: 10px; padding: 15px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #ddd; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { cursor: pointer; border: none; padding: 10px; border-radius: 6px; font-weight: bold; background: var(--fb-blue); color: white; width: 100%; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        
+        /* تصميم الدردشة (Google Chat Style) */
+        #chatPopup { position: fixed; bottom: 0; left: 20px; width: 300px; background: white; border-radius: 10px 10px 0 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 2000; }
+        .chat-header { background: var(--chat-green); color: white; padding: 10px; display: flex; justify-content: space-between; border-radius: 10px 10px 0 0; }
+        #chatMsgs { height: 250px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 5px; background: #efe7dd; }
+        .msg { padding: 8px 12px; border-radius: 15px; font-size: 14px; max-width: 80%; line-height: 1.4; }
+        .my { background: #dcf8c6; align-self: flex-start; border-bottom-right-radius: 2px; }
+        .he { background: white; align-self: flex-end; border-bottom-left-radius: 2px; border: 1px solid #ddd; }
+        .friend-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div id="loginScreen" style="text-align:center; padding-top:100px;">
+    <h1 style="color:var(--fb-blue); font-size: 45px; margin-bottom: 10px;">تواصل</h1>
+    <div class="card" style="max-width:320px; margin:auto;">
+        <input type="text" id="u" placeholder="اسم المستخدم">
+        <input type="password" id="p" placeholder="كلمة المرور">
+        <button onclick="handleAuth()">دخول النظام</button>
+    </div>
+</div>
+
+<div id="app" class="hidden">
+    <header>
+        <span style="font-weight:bold; font-size:20px;">تواصل</span>
+        <span id="myTagDisplay" style="font-size:12px; background:rgba(255,255,255,0.2); padding:4px 8px; border-radius:5px;"></span>
+    </header>
+
+    <div class="main">
+        <div class="card">
+            <input type="text" id="searchInp" placeholder="ابحث بالرمز (مثل: ali_1234)">
+            <button onclick="searchUser()" style="background:#42b72a">بحث وإضافة صديق 🔍</button>
+            <div id="searchRes"></div>
+        </div>
+
+        <div class="card">
+            <strong>👥 أصدقائي</strong>
+            <div id="friendsList" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="card">
+            <textarea id="postTxt" placeholder="بماذا تفكر؟" style="height:70px;"></textarea>
+            <button onclick="addPost()">نشر في العام 📢</button>
+        </div>
+
+        <div id="feed"></div>
+    </div>
+</div>
+
+<div id="chatPopup">
+    <div class="chat-header">
+        <span id="chatTitle">دردشة</span>
+        <button onclick="closeChat()" style="background:none; color:white; font-size:18px; width:auto;">✕</button>
+    </div>
+    <div id="chatMsgs"></div>
+    <div style="padding:10px; display:flex; gap:5px; border-top:1px solid #eee;">
+        <input type="text" id="msgInp" style="margin:0;" placeholder="رسالة...">
+        <button onclick="sendMsg()" style="width:50px; margin:0; background:var(--chat-green);">▶</button>
+    </div>
+</div>
+
+<script>
+    // الإعدادات الخاصة بك
+    const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+
+    let myTag = localStorage.getItem("myTag");
+    let currentChatFriend = "";
+
+    // الدخول
+    window.handleAuth = function() {
+        const u = document.getElementById('u').value.trim();
+        const p = document.getElementById('p').value.trim();
+        if(!u || !p) return alert("املاً البيانات");
+
+        db.ref('accounts/' + u).once('value', s => {
+            if(s.exists()) {
+                if(s.val().pass === p) finalizeLogin(s.val().tag);
+                else alert("كلمة المرor خاطئة");
+            } else {
+                const tag = u + "_" + Math.floor(1000 + Math.random() * 9000);
+                db.ref('accounts/' + u).set({pass: p, tag: tag}).then(() => {
+                    db.ref('users_registry/' + tag).set({name: u});
+                    finalizeLogin(tag);
+                });
+            }
+        });
+    }
+
+    function finalizeLogin(tag) {
+        localStorage.setItem("myTag", tag);
+        location.reload();
+    }
+
+    if(myTag) {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('myTagDisplay').innerText = "معرفك: " + myTag;
+        startApp();
+    }
+
+    function startApp() {
+        // تحميل المنشورات
+        db.ref('posts').on('child_added', s => {
+            const p = s.val();
+            const h = `<div class="card"><b>${p.user}</b><p>${p.text}</p></div>`;
+            document.getElementById('feed').insertAdjacentHTML('afterbegin', h);
+        });
+
+        // تحميل الأصدقاء
+        db.ref('friends/' + myTag).on('value', s => {
+            const div = document.getElementById('friendsList'); div.innerHTML = "";
+            s.forEach(f => {
+                div.innerHTML += `<div class="friend-row"><span>👤 ${f.key}</span> 
+                <button onclick="openChat('${f.key}')" style="width:70px; padding:5px; font-size:11px;">دردشة</button></div>`;
+            });
+        });
+    }
+
+    window.searchUser = function() {
+        const q = document.getElementById('searchInp').value.trim();
+        db.ref('users_registry/' + q).once('value', s => {
+            const res = document.getElementById('searchRes');
+            if(s.exists() && q !== myTag) {
+                res.innerHTML = `<div class="friend-row" style="background:#f9f9f9; padding:5px; margin-top:5px; border-radius:5px;">
+                <span>${q}</span> <button onclick="addFriend('${q}')" style="width:70px; background:orange;">إضافة</button></div>`;
+            } else { res.innerHTML = "<small>غير موجود!</small>"; }
+        });
+    }
+
+    window.addFriend = function(tag) {
+        db.ref('friends/' + myTag + '/' + tag).set(true);
+        db.ref('friends/' + tag + '/' + myTag).set(true);
+        alert("تمت الإضافة!");
+    }
+
+    window.addPost = function() {
+        const t = document.getElementById('postTxt').value;
+        if(t) {
+            db.ref('posts').push({user: myTag, text: t});
+            document.getElementById('postTxt').value = "";
+        }
+    }
+
+    // نظام الدردشة
+    window.openChat = function(friend) {
+        currentChatFriend = friend;
+        document.getElementById('chatPopup').style.display = 'flex';
+        document.getElementById('chatTitle').innerText = friend;
+        const chatID = myTag < friend ? myTag+"_"+friend : friend+"_"+myTag;
+        db.ref('chats/' + chatID).off();
+        document.getElementById('chatMsgs').innerHTML = "";
+        db.ref('chats/' + chatID).on('child_added', s => {
+            const m = s.val();
+            const side = m.from === myTag ? 'my' : 'he';
+            document.getElementById('chatMsgs').innerHTML += `<div class="msg ${side}">${m.txt}</div>`;
+            document.getElementById('chatMsgs').scrollTop = document.getElementById('chatMsgs').scrollHeight;
+        });
+    }
+
+    window.sendMsg = function() {
+        const txt = document.getElementById('msgInp').value;
+        if(txt && currentChatFriend) {
+            const chatID = myTag < currentChatFriend ? myTag+"_"+currentChatFriend : currentChatFriend+"_"+myTag;
+            db.ref('chats/' + chatID).push({from: myTag, txt: txt});
+            document.getElementById('msgInp').value = "";
+        }
+    }
+
+    window.closeChat = function() { document.getElementById('chatPopup').style.display = 'none'; }
+</script>
+</body>
+</html>
