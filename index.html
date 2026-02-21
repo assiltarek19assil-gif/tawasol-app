@@ -3,84 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل - النسخة النهائية</title>
+    <title>تواصل - الدخول</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --main: #1877f2; --bg: #f0f2f5; --text: #1c1e21; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; color: var(--text); }
-        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { max-width: 500px; margin: auto; padding: 10px; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; background: #f5f6f7; font-size: 16px; }
-        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
-        
-        /* المنشورات والإعجاب */
-        .post { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; }
-        .post-user { font-weight: bold; color: var(--main); }
-        .like-btn { background: #f0f2f5; color: #65676b; width: auto; padding: 6px 15px; margin-top: 10px; border-radius: 20px; font-size: 14px; }
-        .liked { color: var(--main); background: #e7f3ff; }
-
-        /* الأصدقاء والدردشة */
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .chat-win { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1000; display: flex; flex-direction: column; }
-        .chat-head { background: var(--main); color: white; padding: 15px; display: flex; justify-content: space-between; }
-        .msgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; }
-        .msg { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; }
-        .me { background: #dcf8c6; align-self: flex-start; }
-        .him { background: white; align-self: flex-end; }
-
-        /* التنقل السفلي */
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
-        .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 22px; color: #65676b; }
-        .active { color: var(--main); border-bottom: 3px solid var(--main); }
-        .hidden { display: none !important; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background: #1877f2; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="auth" class="container">
-    <div class="card" style="margin-top: 50px; text-align: center;">
-        <h2 style="color: var(--main);">دخول تواصل</h2>
-        <input id="uI" type="text" placeholder="اسمك المستعار">
-        <input id="pI" type="password" placeholder="كلمة المرور">
+    <div class="login-card">
+        <h2 style="color: #1877f2;">دخول تواصل</h2>
+        <input id="uInp" placeholder="اسم المستخدم">
+        <input id="pInp" type="password" placeholder="كلمة المرور">
         <button onclick="login()">دخول سريع</button>
+        <p id="msg" style="color: gray; font-size: 12px; margin-top: 15px;">جاري الاتصال بقاعدة البيانات...</p>
     </div>
-</div>
 
-<div id="app" class="hidden">
-    <div class="header">منصة تواصل</div>
-    <div class="container">
-        <div id="p-home" class="page">
-            <div class="card"><textarea id="pT" placeholder="ماذا يدور في ذهنك؟"></textarea><button onclick="post()">نشر</button></div>
-            <div id="feed"></div>
-        </div>
+    <script>
+        const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+        firebase.initializeApp(config);
+        const db = firebase.database();
 
-        <div id="p-friends" class="page hidden">
-            <div class="card">
-                <h3>👥 الأصدقاء</h3>
-                <input id="fI" type="text" placeholder="اكتب اسم الصديق...">
-                <button onclick="sendReq()">إرسال طلب صداقة</button>
-            </div>
-            <div class="card"><h4>طلبات بانتظارك</h4><div id="reqs"></div></div>
-            <div class="card"><h4>قائمة الأصدقاء</h4><div id="flist"></div></div>
-        </div>
+        // التأكد من الاتصال
+        db.ref('.info/connected').on('value', s => {
+            document.getElementById('msg').innerText = s.val() ? "✅ متصل وجاهز" : "❌ فشل الاتصال";
+        });
 
-        <div id="p-me" class="page hidden">
-            <div class="card" style="text-align: center;">
-                <h3 id="un"></h3><p id="ut" style="color:var(--main); font-weight:bold;"></p>
-                <button onclick="logout()" style="background:#eee; color:#333;">تسجيل الخروج</button>
-            </div>
-        </div>
-    </div>
-    
-    <div class="nav">
-        <div class="nav-i active" onclick="tab('home')">🏠</div>
-        <div class="nav-i" onclick="tab('friends')">👥</div>
-        <div class="nav-i" onclick="tab('me')">⚙️</div>
-    </div>
-</div>
-
-<div id="cw" class="chat-win hidden">
-    <div class="chat-head"><span id="ct"></span><span onclick="closeC()" style="cursor:pointer">✖</span></div>
-    <div id="mb"
+        function login() {
+            const u = document.getElementById('uInp').value;
+            const p = document.getElementById('pInp').value;
+            if(!u || !p) return alert("اكمل البيانات");
+            
+            db.ref('users/'+u).once('value', s => {
+                const user = s.val() || { name: u, pass: p, status: 'active' };
+                if(!s.exists()) db.ref('users/'+u).set(user);
+                localStorage.setItem('app_user', JSON.stringify(user));
+                alert("تم الدخول بنجاح! حدث الصفحة الآن");
+                location.reload();
+            });
+        }
+    </script>
+</body>
+</html>
