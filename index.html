@@ -1,108 +1,30 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تواصل الاجتماعية</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        :root { --main: #1877f2; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; overflow-x: hidden; }
-        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .container { max-width: 500px; margin: auto; padding: 10px; }
-        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; background: #f5f6f7; }
-        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
-        
-        /* نظام المنشورات */
-        .post { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; border: 1px solid #ddd; position: relative; }
-        .post-u { font-weight: bold; color: var(--main); display: block; margin-bottom: 5px; }
-        .post-t { font-size: 15px; line-height: 1.4; white-space: pre-wrap; }
-
-        /* شريط التنقل السفلي */
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
-        .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 22px; color: #65676b; transition: 0.3s; }
-        .nav-i.active { color: var(--main); border-bottom: 3px solid var(--main); }
-
-        /* الدردشة */
-        .chat-win { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: white; z-index: 1000; display: flex; flex-direction: column; }
-        .chat-h { background: var(--main); color: white; padding: 15px; display: flex; justify-content: space-between; font-weight: bold; }
-        .msgs { flex: 1; overflow-y: auto; padding: 15px; background: #e5ddd5; display: flex; flex-direction: column; }
-        .msg { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; word-wrap: break-word; }
-        .me { background: #dcf8c6; align-self: flex-start; border-bottom-left-radius: 2px; }
-        .him { background: white; align-self: flex-end; border-bottom-right-radius: 2px; }
-
-        .hidden { display: none !important; }
-    </style>
-</head>
-<body>
-
-<div id="authArea" class="container">
-    <div class="card" style="margin-top: 50px; text-align: center;">
-        <h2 style="color: var(--main);">دخول تواصل</h2>
-        <input id="uInp" type="text" placeholder="اسم المستخدم">
-        <input id="pInp" type="password" placeholder="كلمة المرور">
-        <button id="lBtn" onclick="login()">دخول الآن</button>
-    </div>
-</div>
-
-<div id="appArea" class="hidden">
-    <div class="header">منصة تواصل</div>
-    <div class="container">
-        
-        <div id="p-home" class="page">
-            <div class="card">
-                <textarea id="pTxt" placeholder="بماذا تفكر اليوم؟"></textarea>
-                <button onclick="post()">نشر في المنصة</button>
-            </div>
-            <div id="feed"></div>
-        </div>
-
-        <div id="p-friends" class="page hidden">
-            <div class="card">
-                <h3>👥 إضافة صديق جديد</h3>
-                <input id="fInp" type="text" placeholder="اكتب اسم الصديق بدقة...">
-                <button onclick="sendReq()">إرسال طلب صداقة</button>
-            </div>
-            <div class="card"><h4>طلبات واردة</h4><div id="reqs"></div></div>
-            <div id="flist"></div>
-        </div>
-
-        <div id="p-me" class="page hidden">
-            <div class="card" style="text-align: center;">
-                <h2 id="uDisp"></h2>
-                <p id="tDisp" style="color: var(--main); font-weight: bold;"></p>
-                <button onclick="logout()" style="background:#eee; color:#333; margin-top:20px;">تسجيل الخروج</button>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="nav">
-        <div id="n-home" class="nav-i active" onclick="tab('home')">🏠</div>
-        <div id="n-friends" class="nav-i" onclick="tab('friends')">👥</div>
-        <div id="n-me" class="nav-i" onclick="tab('me')">⚙️</div>
-    </div>
-</div>
-
-<div id="cw" class="chat-win hidden">
-    <div class="chat-h"><span id="ct">اسم الصديق</span><span onclick="closeC()" style="cursor:pointer; font-size:20px;">✕</span></div>
-    <div id="mb" class="msgs"></div>
-    <div style="padding:10px; display:flex; gap:5px; background:white; border-top:1px solid #ddd;">
-        <input id="mi" style="margin:0" placeholder="اكتب رسالة...">
-        <button onclick="sendM()" style="width:80px">إرسال</button>
-    </div>
-</div>
-
-<script>
-    const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    if (!firebase.apps.length) firebase.initializeApp(config);
-    const db = firebase.database();
-    let user = JSON.parse(localStorage.getItem('app_user'));
-    let activeChat = "";
-
-    function login() {
+function login() {
         const u = document.getElementById('uInp').value.trim();
-        const p = document.getElementById('p
+        const p = document.getElementById('pInp').value.trim();
+        
+        // تنبيه بسيط للتأكد أن الزر استجاب للضغط
+        if(!u || !p) {
+            alert("يرجى إدخال الاسم وكلمة المرور");
+            return;
+        }
+
+        console.log("جاري محاولة الدخول..."); // للتأكد في خلفية المتصفح
+
+        db.ref('users/'+u).once('value').then(s => {
+            const d = s.val();
+            if(d && d.pass !== p) {
+                alert("كلمة المرور خاطئة!");
+            } else {
+                user = d || { name: u, pass: p, tag: u+"#"+Math.floor(1000+Math.random()*9000), friends: {} };
+                if(!d) db.ref('users/'+u).set(user);
+                
+                localStorage.setItem('app_user', JSON.stringify(user));
+                // التوجيه المباشر بدل التحديث لضمان السرعة
+                document.getElementById('authArea').classList.add('hidden');
+                document.getElementById('appArea').classList.remove('hidden');
+                location.reload(); // تحديث نهائي لتنشيط البيانات
+            }
+        }).catch(err => {
+            alert("خطأ في الاتصال بقاعدة البيانات: " + err.message);
+        });
+    }
