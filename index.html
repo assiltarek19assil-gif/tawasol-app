@@ -4,8 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>منصة تواصل الاجتماعية</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         :root { --main: #1877f2; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
@@ -13,58 +15,63 @@
         .container { max-width: 500px; margin: auto; padding: 10px; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .u-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #ddd; }
-        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; }
-        .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .btn:active { opacity: 0.8; }
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
         .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 22px; color: #65676b; }
         .post-img { width: 100%; border-radius: 8px; margin-top: 10px; }
         .hidden { display: none !important; }
-        /* نافذة الدردشة */
-        .chat-pop { position: fixed; bottom: 65px; left: 10px; width: 280px; height: 350px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 200; }
+        .chat-pop { position: fixed; bottom: 65px; left: 10px; width: 280px; height: 350px; background: white; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 200; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
-    <div id="auth" class="container">
+
+    <div id="authArea" class="container">
         <div class="card" style="margin-top: 50px; text-align: center;">
-            <h2>دخول تواصل</h2>
-            <input id="uI" placeholder="اسم المستخدم">
-            <input id="pI" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="login()">دخول</button>
+            <h2 style="color: var(--main);">دخول تواصل</h2>
+            <input id="uInp" type="text" placeholder="اسم المستخدم">
+            <input id="pInp" type="password" placeholder="كلمة المرور">
+            <button class="btn" onclick="login()">دخول الآن</button>
+            <p id="loginMsg" style="font-size: 12px; color: gray; margin-top: 10px;"></p>
         </div>
     </div>
 
-    <div id="app" class="hidden">
+    <div id="appArea" class="hidden">
         <div class="header">تواصل</div>
         <div class="container">
             <div id="p-home" class="page">
                 <div class="card">
-                    <textarea id="pT" placeholder="بماذا تفكر؟"></textarea>
-                    <input id="pImg" placeholder="رابط صورة المنشور (اختياري)">
+                    <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
+                    <input id="pImgUrl" placeholder="رابط صورة المنشور (اختياري)">
                     <button class="btn" onclick="post()">نشر</button>
                 </div>
                 <div id="feed"></div>
             </div>
+
             <div id="p-friends" class="page hidden">
                 <div class="card">
                     <h3>إضافة صديق بالرمز</h3>
-                    <input id="tagI" placeholder="الرمز#0000">
+                    <input id="friendTagI" placeholder="الرمز#0000">
                     <button class="btn" onclick="addFriend()">إرسال طلب</button>
                 </div>
-                <div id="reqs"></div>
+                <div id="reqsArea"></div>
                 <h4>أصدقائي (اضغط للدردشة)</h4>
-                <div id="myFriends"></div>
+                <div id="friendsList"></div>
             </div>
+
             <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myAvatar" class="u-img" src="">
-                    <h3 id="uD"></h3>
-                    <input id="avatarI" placeholder="رابط صورتك الشخصية">
+                    <img id="myAvatarDisplay" class="u-img" src="https://via.placeholder.com/50">
+                    <h3 id="userNameDisplay"></h3>
+                    <input id="avatarUrlInput" placeholder="رابط صورتك الشخصية">
                     <button class="btn" onclick="updateAvatar()">تحديث الصورة</button>
-                    <p>رمزك: <b id="myTag"></b></p>
-                    <button class="btn" style="background:#eee; color:#333;" onclick="logout()">خروج</button>
+                    <p style="background: #eee; padding: 5px; border-radius: 5px;">رمزك: <b id="userTagDisplay"></b></p>
+                    <button class="btn" style="background:#f44336; margin-top:10px;" onclick="logout()">خروج</button>
                 </div>
             </div>
         </div>
+
         <div class="nav">
             <div class="nav-i" onclick="tab('home')">🏠</div>
             <div class="nav-i" onclick="tab('friends')">👥</div>
@@ -73,12 +80,101 @@
     </div>
 
     <div id="chatBox" class="chat-pop hidden">
-        <div style="background:var(--main); color:white; padding:10px; display:flex; justify-content:space-between;">
-            <span id="chatTitle">دردشة</span> <span onclick="closeChat()">✕</span>
+        <div style="background:var(--main); color:white; padding:10px; display:flex; justify-content:space-between; border-radius: 10px 10px 0 0;">
+            <span id="chatTitle">دردشة</span> <span onclick="closeChat()" style="cursor:pointer">✕</span>
         </div>
-        <div id="msgs" style="flex:1; overflow-y:auto; padding:10px; background:#f9f9f9;"></div>
-        <div style="padding:5px; display:flex;"><input id="mI" placeholder="رسالة.."><button onclick="sendMsg()">↗</button></div>
+        <div id="msgsDisplay" style="flex:1; overflow-y:auto; padding:10px; background:#f9f9f9; display:flex; flex-direction:column;"></div>
+        <div style="padding:5px; display:flex; border-top:1px solid #eee;">
+            <input id="msgInput" style="margin:0; flex:1;" placeholder="اكتب رسالة..">
+            <button class="btn" style="width:auto; margin-right:5px;" onclick="sendMsg()">↗</button>
+        </div>
     </div>
 
-<script>
-    const config = { databaseURL: "
+    <script>
+        // 2. إعداد Firebase
+        const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.database();
+
+        let currentUser = JSON.parse(localStorage.getItem('app_user'));
+        let activeChatFriend = "";
+
+        // دالة الدخول (التي كانت معطلة)
+        function login() {
+            const u = document.getElementById('uInp').value.trim();
+            const p = document.getElementById('pInp').value.trim();
+            const msg = document.getElementById('loginMsg');
+
+            if(!u || !p) { alert("أدخل البيانات كاملة"); return; }
+            msg.innerText = "جاري التحقق...";
+
+            db.ref('users/' + u).once('value').then(s => {
+                const data = s.val();
+                if(data && data.status === 'banned') {
+                    alert("عذراً، هذا الحساب محظور من الإدارة!");
+                    msg.innerText = "";
+                    return;
+                }
+                if(data && data.pass !== p) {
+                    alert("كلمة المرور خاطئة");
+                    msg.innerText = "";
+                    return;
+                }
+
+                // إنشاء مستخدم جديد أو تسجيل الدخول
+                currentUser = data || { 
+                    name: u, 
+                    pass: p, 
+                    tag: u + "#" + Math.floor(1000 + Math.random() * 9000), 
+                    status: 'active', 
+                    avatar: '' 
+                };
+
+                if(!data) db.ref('users/' + u).set(currentUser);
+                
+                localStorage.setItem('app_user', JSON.stringify(currentUser));
+                location.reload(); // إعادة التحميل لتنشيط الجلسة
+            }).catch(e => {
+                alert("خطأ في القاعدة: " + e.message);
+            });
+        }
+
+        // تشغيل المنصة إذا كان المستخدم مسجلاً
+        if(currentUser) {
+            document.getElementById('authArea').classList.add('hidden');
+            document.getElementById('appArea').classList.remove('hidden');
+            document.getElementById('userNameDisplay').innerText = currentUser.name;
+            document.getElementById('userTagDisplay').innerText = currentUser.tag;
+            document.getElementById('myAvatarDisplay').src = currentUser.avatar || 'https://via.placeholder.com/50';
+            loadPosts(); loadRequests(); loadFriends();
+        }
+
+        function tab(t) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById('p-' + t).classList.remove('hidden');
+        }
+
+        function post() {
+            const text = document.getElementById('pTxt').value;
+            const img = document.getElementById('pImgUrl').value;
+            if(text || img) {
+                db.ref('posts').push({ u: currentUser.name, t: text, img: img, likes: 0, avatar: currentUser.avatar || '' });
+                document.getElementById('pTxt').value = ""; document.getElementById('pImgUrl').value = "";
+            }
+        }
+
+        function loadPosts() {
+            db.ref('posts').on('value', s => {
+                const f = document.getElementById('feed'); f.innerHTML = "";
+                s.forEach(p => {
+                    const d = p.val();
+                    f.insertAdjacentHTML('afterbegin', `
+                        <div class="card">
+                            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                                <img src="${d.avatar || 'https://via.placeholder.com/30'}" style="width:35px; height:35px; border-radius:50%">
+                                <b>@${d.u}</b>
+                            </div>
+                            <p>${d.t}</p>
+                            ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
+                            <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                            <button style="background:none; border:none; color:var(--main); cursor:pointer
