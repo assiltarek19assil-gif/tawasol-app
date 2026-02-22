@@ -2,40 +2,33 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>إدارة الشركة - التحكم الشامل</title>
+    <title>لوحة التحكم السرية للمسؤول</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #1877f2; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        .ban-btn { background: #ff4757; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; }
-        .unban-btn { background: #2ed573; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 5px; }
-        .chat-box { background: #eef2f7; padding: 10px; border-radius: 8px; margin-top: 10px; border-right: 4px solid #1877f2; }
+        body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 20px; }
+        .section { background: #2a2a2a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #1877f2; }
+        .item { padding: 10px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
+        button { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        .chat-box { background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto; margin-top: 10px; }
     </style>
 </head>
 <body>
+    <h1>🛡️ لوحة الإدارة العليا</h1>
 
-    <h1>🛡️ لوحة تحكم شركة تواصل</h1>
-
-    <div class="card">
-        <h2>👤 إدارة المستخدمين (الاسم + الرمز)</h2>
-        <table>
-            <thead><tr><th>المستخدم</th><th>الرمز</th><th>كلمة السر</th><th>الحالة</th><th>الإجراء</th></tr></thead>
-            <tbody id="usersList"></tbody>
-        </table>
+    <div class="section">
+        <h3>👥 المستخدمين (حظر/حذف)</h3>
+        <div id="userList"></div>
     </div>
 
-    <div class="card">
-        <h2>📝 المنشورات</h2>
-        <div id="postsList"></div>
+    <div class="section">
+        <h3>📝 المنشورات (إزالة المخالف)</h3>
+        <div id="postList"></div>
     </div>
 
-    <div class="card">
-        <h2>💬 الدردشات المباشرة</h2>
-        <div id="chatsList"></div>
+    <div class="section">
+        <h3>👁️ مراقبة الدردشات الحية</h3>
+        <div id="chatWatch"></div>
     </div>
 
 <script>
@@ -43,35 +36,48 @@
     firebase.initializeApp(config);
     const db = firebase.database();
 
+    // 1. إدارة المستخدمين
     db.ref('users').on('value', s => {
-        const list = document.getElementById('usersList'); list.innerHTML = "";
+        const uL = document.getElementById('userList'); uL.innerHTML = "";
         s.forEach(u => {
-            const d = u.val(); const isB = d.status === 'banned';
-            list.innerHTML += `<tr>
-                <td>${d.name}</td>
-                <td style="color:blue">${d.tag || '---'}</td>
-                <td>${d.pass}</td>
-                <td style="color:${isB?'red':'green'}">${isB?'محظور':'نشط'}</td>
-                <td><button class="${isB?'unban-btn':'ban-btn'}" onclick="setBan('${u.key}', ${!isB})">${isB?'تفعيل':'حظر'}</button></td>
-            </tr>`;
+            const d = u.val();
+            uL.innerHTML += `<div class="item">
+                <span>${d.name} [${d.status}]</span>
+                <div>
+                    <button style="background:#f39c12" onclick="toggleBan('${u.key}','${d.status}')">حظر/فك</button>
+                    <button onclick="removeData('users/${u.key}')">حذف</button>
+                </div>
+            </div>`;
         });
     });
 
+    // 2. إدارة المنشورات
     db.ref('posts').on('value', s => {
-        const list = document.getElementById('postsList'); list.innerHTML = "";
-        s.forEach(p => { const d = p.val(); list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee"><b>${d.u}:</b> ${d.t} <button onclick="db.ref('posts/${p.key}').remove()" style="color:red; border:none; background:none; cursor:pointer">حذف</button></div>`; });
-    });
-
-    db.ref('chats').on('value', s => {
-        const list = document.getElementById('chatsList'); list.innerHTML = "";
-        s.forEach(room => {
-            let h = `<div class="chat-box"><small>غرفة: ${room.key}</small>`;
-            room.forEach(m => { const d = m.val(); h += `<div><b>${d.sender}:</b> ${d.text}</div>`; });
-            list.innerHTML += h + `</div>`;
+        const pL = document.getElementById('postList'); pL.innerHTML = "";
+        s.forEach(p => {
+            pL.innerHTML += `<div class="item">
+                <span><b>${p.val().u}:</b> ${p.val().t.substring(0,20)}...</span>
+                <button onclick="removeData('posts/${p.key}')">حذف المنشور</button>
+            </div>`;
         });
     });
 
-    function setBan(id, b) { db.ref('users/'+id+'/status').set(b?'banned':'active'); }
+    // 3. مراقبة الدردشات
+    db.ref('chats').on('value', s => {
+        const cW = document.getElementById('chatWatch'); cW.innerHTML = "";
+        s.forEach(room => {
+            let messages = "";
+            room.forEach(m => { messages += `[${m.val().s}]: ${m.val().t}\n`; });
+            cW.innerHTML += `<div>
+                <b>غرفة: ${room.key}</b>
+                <pre class="chat-box">${messages}</pre>
+                <button onclick="removeData('chats/${room.key}')">مسح السجل</button>
+            </div><hr>`;
+        });
+    });
+
+    function toggleBan(id, st) { db.ref('users/'+id+'/status').set(st==='banned'?'active':'banned'); }
+    function removeData(path) { if(confirm("حذف نهائي؟")) db.ref(path).remove(); }
 </script>
 </body>
 </html>
