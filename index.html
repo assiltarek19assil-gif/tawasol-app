@@ -1,30 +1,118 @@
-function login() {
-        const u = document.getElementById('uInp').value.trim();
-        const p = document.getElementById('pInp').value.trim();
-        
-        // تنبيه بسيط للتأكد أن الزر استجاب للضغط
-        if(!u || !p) {
-            alert("يرجى إدخال الاسم وكلمة المرور");
-            return;
-        }
 
-        console.log("جاري محاولة الدخول..."); // للتأكد في خلفية المتصفح
 
-        db.ref('users/'+u).once('value').then(s => {
-            const d = s.val();
-            if(d && d.pass !== p) {
-                alert("كلمة المرور خاطئة!");
-            } else {
-                user = d || { name: u, pass: p, tag: u+"#"+Math.floor(1000+Math.random()*9000), friends: {} };
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تواصل - المنصة الاجتماعية</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <style>
+        :root { --main: #1877f2; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding-bottom: 60px; }
+        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 100; }
+        .container { max-width: 500px; margin: auto; padding: 10px; }
+        .card { background: white; border-radius: 10px; padding: 20px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .post { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #ddd; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 55px; }
+        .nav-i { flex: 1; text-align: center; line-height: 55px; cursor: pointer; font-size: 20px; color: #65676b; }
+        .active { color: var(--main); border-bottom: 3px solid var(--main); }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="authArea" class="container">
+        <div class="card" style="margin-top: 50px;">
+            <h2 style="color: var(--main); text-align: center;">دخول تواصل</h2>
+            <input id="uInp" type="text" placeholder="اسم المستخدم">
+            <input id="pInp" type="password" placeholder="كلمة المرور">
+            <button onclick="login()">دخول الآن</button>
+        </div>
+    </div>
+
+    <div id="appArea" class="hidden">
+        <div class="header">منصة تواصل</div>
+        <div class="container">
+            <div id="p-home" class="page">
+                <div class="card">
+                    <textarea id="pTxt" style="width:100%; height:80px; border:1px solid #ddd; border-radius:8px; padding:10px;" placeholder="ماذا يدور في ذهنك؟"></textarea>
+                    <button onclick="post()" style="margin-top:10px;">نشر</button>
+                </div>
+                <div id="feed"></div>
+            </div>
+            
+            <div id="p-me" class="page hidden">
+                <div class="card" style="text-align: center;">
+                    <h3 id="uDisp"></h3>
+                    <button onclick="logout()" style="background:#eee; color:#333;">خروج</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav">
+            <div class="nav-i active" onclick="tab('home')">🏠</div>
+            <div class="nav-i" onclick="tab('me')">⚙️</div>
+        </div>
+    </div>
+
+    <script>
+        // إعدادات Firebase
+        const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(config);
+        const db = firebase.database();
+
+        let user = JSON.parse(localStorage.getItem('app_user'));
+
+        function login() {
+            const u = document.getElementById('uInp').value.trim();
+            const p = document.getElementById('pInp').value.trim();
+            if(!u || !p) return alert("أدخل البيانات");
+
+            db.ref('users/'+u).once('value', s => {
+                const d = s.val();
+                if(d && d.pass !== p) return alert("كلمة المرور خاطئة");
+                
+                user = d || { name: u, pass: p };
                 if(!d) db.ref('users/'+u).set(user);
                 
                 localStorage.setItem('app_user', JSON.stringify(user));
-                // التوجيه المباشر بدل التحديث لضمان السرعة
-                document.getElementById('authArea').classList.add('hidden');
-                document.getElementById('appArea').classList.remove('hidden');
-                location.reload(); // تحديث نهائي لتنشيط البيانات
-            }
-        }).catch(err => {
-            alert("خطأ في الاتصال بقاعدة البيانات: " + err.message);
-        });
-    }
+                location.reload();
+            });
+        }
+
+        if(user) {
+            document.getElementById('authArea').classList.add('hidden');
+            document.getElementById('appArea').classList.remove('hidden');
+            document.getElementById('uDisp').innerText = user.name;
+            loadPosts();
+        }
+
+        function tab(n) {
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById('p-'+n).classList.remove('hidden');
+        }
+
+        function post() {
+            const t = document.getElementById('pTxt').value;
+            if(t) db.ref('posts').push({ u:user.name, t:t });
+            document.getElementById('pTxt').value = "";
+        }
+
+        function loadPosts() {
+            db.ref('posts').on('value', s => {
+                const f = document.getElementById('feed'); f.innerHTML = "";
+                s.forEach(p => {
+                    f.insertAdjacentHTML('afterbegin', `<div class="post"><b>@${p.val().u}</b><br>${p.val().t}</div>`);
+                });
+            });
+        }
+
+        function logout() { localStorage.clear(); location.reload(); }
+    </script>
+</body>
+</html>
