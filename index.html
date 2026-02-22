@@ -177,4 +177,89 @@
                             <p>${d.t}</p>
                             ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
                             <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-                            <button style="background:none; border:none; color:var(--main); cursor:pointer
+                            <button style="background:none; border:none; color:var(--main); cursor:pointer; font-weight:bold;" onclick="likePost('${p.key}')">👍 ${d.likes || 0} إعجاب</button>
+                        </div>`);
+                });
+            });
+        }
+
+        function likePost(id) { db.ref('posts/' + id + '/likes').transaction(c => (c || 0) + 1); }
+
+        function updateAvatar() {
+            const url = document.getElementById('avatarUrlInput').value;
+            if(url) {
+                db.ref('users/' + currentUser.name + '/avatar').set(url);
+                currentUser.avatar = url;
+                localStorage.setItem('app_user', JSON.stringify(currentUser));
+                location.reload();
+            }
+        }
+
+        function addFriend() {
+            const tag = document.getElementById('friendTagI').value.trim();
+            if(!tag) return;
+            db.ref('users').once('value', s => {
+                let target = null;
+                s.forEach(u => { if(u.val().tag === tag) target = u.key; });
+                if(target && target !== currentUser.name) {
+                    db.ref('reqs/' + target + '/' + currentUser.name).set(true);
+                    alert("تم إرسال الطلب!");
+                } else { alert("لم يتم العثور على الرمز أو أنه رمزك الخاص"); }
+            });
+        }
+
+        function loadRequests() {
+            db.ref('reqs/' + currentUser.name).on('value', s => {
+                const r = document.getElementById('reqsArea'); r.innerHTML = "";
+                s.forEach(req => {
+                    r.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>${req.key} يود إضافتك</span>
+                        <button class="btn" style="width:auto; padding:5px 15px;" onclick="acceptFriend('${req.key}')">قبول</button>
+                    </div>`;
+                });
+            });
+        }
+
+        function acceptFriend(n) {
+            db.ref('users/' + currentUser.name + '/friends/' + n).set(true);
+            db.ref('users/' + n + '/friends/' + currentUser.name).set(true);
+            db.ref('reqs/' + currentUser.name + '/' + n).remove();
+        }
+
+        function loadFriends() {
+            db.ref('users/' + currentUser.name + '/friends').on('value', s => {
+                const list = document.getElementById('friendsList'); list.innerHTML = "";
+                s.forEach(f => {
+                    list.innerHTML += `<div class="card" style="cursor:pointer" onclick="openChat('${f.key}')">👤 ${f.key}</div>`;
+                });
+            });
+        }
+
+        function openChat(n) {
+            activeChatFriend = n;
+            document.getElementById('chatBox').classList.remove('hidden');
+            document.getElementById('chatTitle').innerText = n;
+            const room = currentUser.name < n ? currentUser.name + "_" + n : n + "_" + currentUser.name;
+            db.ref('chats/' + room).on('value', s => {
+                const display = document.getElementById('msgsDisplay'); display.innerHTML = "";
+                s.forEach(m => {
+                    const side = m.val().s === currentUser.name ? 'align-self: flex-start; background:#dcf8c6;' : 'align-self: flex-end; background:#fff;';
+                    display.innerHTML += `<div style="padding:8px; margin:5px; border-radius:10px; max-width:80%; ${side}"><b>${m.val().s}:</b> ${m.val().t}</div>`;
+                });
+                display.scrollTop = display.scrollHeight;
+            });
+        }
+
+        function sendMsg() {
+            const text = document.getElementById('msgInput').value;
+            if(!text || !activeChatFriend) return;
+            const room = currentUser.name < activeChatFriend ? currentUser.name + "_" + activeChatFriend : activeChatFriend + "_" + currentUser.name;
+            db.ref('chats/' + room).push({ s: currentUser.name, t: text });
+            document.getElementById('msgInput').value = "";
+        }
+
+        function closeChat() { document.getElementById('chatBox').classList.add('hidden'); }
+        function logout() { localStorage.clear(); location.reload(); }
+    </script>
+</body>
+</html>
