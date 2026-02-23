@@ -2,82 +2,96 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة التحكم السرية للمسؤول</title>
+    <title>لوحة التحكم العليا - الإدارة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: #eee; padding: 20px; }
-        .section { background: #2a2a2a; padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 5px solid #1877f2; }
-        .item { padding: 10px; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
-        button { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-        .chat-box { background: #000; color: #0f0; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto; margin-top: 10px; }
+        body { font-family: sans-serif; background: #0f172a; color: #e2e8f0; padding: 20px; }
+        .section { background: #1e293b; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #334155; }
+        h2 { color: #38bdf8; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; }
+        .item { background: #334155; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .pass-tag { background: #ef4444; color: white; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 14px; }
+        .btn-ban { background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-del { background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; }
+        .chat-log { background: #000; color: #4ade80; padding: 10px; font-family: monospace; border-radius: 5px; max-height: 150px; overflow-y: auto; white-space: pre-wrap; }
     </style>
 </head>
 <body>
-    <h1>🛡️ لوحة الإدارة العليا</h1>
+    <h1>🛡️ غرفة التحكم (المدير: اصيل)</h1>
 
     <div class="section">
-        <h3>👥 المستخدمين (حظر/حذف)</h3>
-        <div id="userList"></div>
+        <h2>👥 قائمة المستخدمين وكلمات المرور</h2>
+        <div id="userList">جاري التحميل...</div>
     </div>
 
     <div class="section">
-        <h3>📝 المنشورات (إزالة المخالف)</h3>
-        <div id="postList"></div>
+        <h2>📝 رقابة المنشورات</h2>
+        <div id="postList">جاري التحميل...</div>
     </div>
 
     <div class="section">
-        <h3>👁️ مراقبة الدردشات الحية</h3>
-        <div id="chatWatch"></div>
+        <h2>💬 سجل الدردشات الحية</h2>
+        <div id="chatWatch">جاري التحميل...</div>
     </div>
 
 <script>
     const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(config);
+    if (!firebase.apps.length) firebase.initializeApp(config);
     const db = firebase.database();
 
-    // 1. إدارة المستخدمين
+    // جلب المستخدمين مع عرض كلمات المرور
     db.ref('users').on('value', s => {
-        const uL = document.getElementById('userList'); uL.innerHTML = "";
+        const list = document.getElementById('userList'); list.innerHTML = "";
         s.forEach(u => {
             const d = u.val();
-            uL.innerHTML += `<div class="item">
-                <span>${d.name} [${d.status}]</span>
+            list.innerHTML += `<div class="item">
                 <div>
-                    <button style="background:#f39c12" onclick="toggleBan('${u.key}','${d.status}')">حظر/فك</button>
-                    <button onclick="removeData('users/${u.key}')">حذف</button>
+                    <b>👤 ${d.name}</b> <br>
+                    <span>🔑 الباسورد: <span class="pass-tag">${d.pass}</span></span> <br>
+                    <small>🏷️ الرمز: ${d.tag}</small>
+                </div>
+                <div>
+                    <button class="btn-ban" onclick="toggleBan('${u.key}', '${d.status}')">${d.status === 'banned' ? 'فك الحظر' : 'حظر'}</button>
+                    <button class="btn-del" onclick="removeData('users/${u.key}')">حذف</button>
                 </div>
             </div>`;
         });
     });
 
-    // 2. إدارة المنشورات
+    // رقابة المنشورات
     db.ref('posts').on('value', s => {
-        const pL = document.getElementById('postList'); pL.innerHTML = "";
+        const pList = document.getElementById('postList'); pList.innerHTML = "";
         s.forEach(p => {
-            pL.innerHTML += `<div class="item">
-                <span><b>${p.val().u}:</b> ${p.val().t.substring(0,20)}...</span>
-                <button onclick="removeData('posts/${p.key}')">حذف المنشور</button>
+            const d = p.val();
+            pList.innerHTML += `<div class="item">
+                <span><b>@${d.u}:</b> ${d.t ? d.t.substring(0,30) : 'صورة فقط'}...</span>
+                <button class="btn-del" onclick="removeData('posts/${p.key}')">حذف المنشور</button>
             </div>`;
         });
     });
 
-    // 3. مراقبة الدردشات
+    // مراقبة الدردشات
     db.ref('chats').on('value', s => {
-        const cW = document.getElementById('chatWatch'); cW.innerHTML = "";
+        const cWatch = document.getElementById('chatWatch'); cWatch.innerHTML = "";
         s.forEach(room => {
-            let messages = "";
-            room.forEach(m => { messages += `[${m.val().s}]: ${m.val().t}\n`; });
-            cW.innerHTML += `<div>
-                <b>غرفة: ${room.key}</b>
-                <pre class="chat-box">${messages}</pre>
-                <button onclick="removeData('chats/${room.key}')">مسح السجل</button>
-            </div><hr>`;
+            let msgs = "";
+            room.forEach(m => { msgs += `[${m.val().s}]: ${m.val().t}\n`; });
+            cWatch.innerHTML += `<div style="margin-bottom:15px;">
+                <b>📦 غرفة: ${room.key}</b>
+                <div class="chat-log">${msgs}</div>
+                <button class="btn-del" style="margin-top:5px; font-size:12px;" onclick="removeData('chats/${room.key}')">مسح السجل</button>
+            </div>`;
         });
     });
 
-    function toggleBan(id, st) { db.ref('users/'+id+'/status').set(st==='banned'?'active':'banned'); }
-    function removeData(path) { if(confirm("حذف نهائي؟")) db.ref(path).remove(); }
+    function toggleBan(id, currentStatus) {
+        const newStatus = currentStatus === 'banned' ? 'active' : 'banned';
+        db.ref('users/'+id+'/status').set(newStatus);
+    }
+
+    function removeData(path) {
+        if(confirm("هل أنت متأكد من هذا الإجراء؟")) db.ref(path).remove();
+    }
 </script>
 </body>
 </html>
