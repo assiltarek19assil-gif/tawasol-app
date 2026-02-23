@@ -3,44 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تواصل Pro - مع الرموز</title>
+    <title>منصة تواصل Pro</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root { --main: #1877f2; --bg: #f0f2f5; --white: #ffffff; --tag: #65676b; }
-        * { box-sizing: border-box; transition: 0.3s; }
+        :root { --main: #1877f2; --bg: #f0f2f5; --white: #ffffff; }
+        * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
-        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-size: 20px; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
-        .container { max-width: 700px; margin: auto; padding: 15px; }
-        .card { background: var(--white); border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
-        .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .user-name { font-weight: bold; font-size: 16px; color: #050505; }
-        .user-tag { font-size: 12px; color: var(--tag); background: #e4e6eb; padding: 2px 6px; border-radius: 5px; margin-right: 5px; direction: ltr; display: inline-block; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; outline: none; }
-        .btn { background: var(--main); color: white; border: none; padding: 12px 20px; border-radius: 10px; width: 100%; cursor: pointer; font-weight: bold; }
-        .post-img { width: 100%; border-radius: 10px; margin-top: 10px; max-height: 500px; object-fit: contain; background: #f0f2f5; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; z-index: 1000; }
-        .nav-i { flex: 1; text-align: center; line-height: 60px; cursor: pointer; font-size: 24px; color: #65676b; }
-        .chat-pop { position: fixed; bottom: 70px; left: 15px; right: 15px; max-width: 400px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 5px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; border: 1px solid #eee; }
-        .msg { padding: 10px 15px; margin: 5px; border-radius: 15px; max-width: 80%; font-size: 14px; }
-        .me { align-self: flex-start; background: #dcf8c6; }
-        .him { align-self: flex-end; background: #e4e6eb; }
+        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 600px; margin: auto; padding: 10px; }
+        .card { background: var(--white); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #ddd; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-name { font-weight: bold; display: block; }
+        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 1px 5px; border-radius: 4px; display: inline-block; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 16px; }
+        .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; }
+        .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; }
         .hidden { display: none !important; }
-        @media (min-width: 700px) { .chat-pop { right: auto; left: 20px; } }
+        /* تصميم الدردشة */
+        .chat-pop { position: fixed; bottom: 65px; left: 10px; right: 10px; max-width: 350px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; }
+        .msg-box { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
+        .m-me { align-self: flex-start; background: #dcf8c6; padding: 8px; border-radius: 10px; margin: 4px; }
+        .m-him { align-self: flex-end; background: #eee; padding: 8px; border-radius: 10px; margin: 4px; }
     </style>
 </head>
 <body>
 
     <div id="authArea" class="container">
-        <div class="card" style="margin-top: 80px; text-align: center;">
-            <h2 style="color: var(--main);">تواصل Pro</h2>
+        <div class="card" style="margin-top: 50px; text-align: center;">
+            <h2 style="color: var(--main);">تواصل</h2>
             <input id="uInp" type="text" placeholder="اسم المستخدم">
             <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="login()">دخول</button>
-            <p id="loginMsg" style="color: gray; margin-top: 15px;"></p>
+            <button class="btn" onclick="login()">دخول الآن</button>
         </div>
     </div>
 
@@ -49,11 +48,8 @@
         <div class="container">
             <div id="p-home" class="page">
                 <div class="card">
-                    <div style="display:flex; gap:10px;">
-                        <img id="postAvatar" class="u-img" src="">
-                        <textarea id="pTxt" placeholder="بماذا تفكر؟" style="height: 80px;"></textarea>
-                    </div>
-                    <input id="pImgUrl" placeholder="رابط صورة مباشر">
+                    <textarea id="pTxt" placeholder="اكتب شيئاً..."></textarea>
+                    <input id="pImgUrl" placeholder="رابط صورة مباشر (اختياري)">
                     <button class="btn" onclick="post()">نشر</button>
                 </div>
                 <div id="feed"></div>
@@ -61,24 +57,23 @@
 
             <div id="p-friends" class="page hidden">
                 <div class="card">
-                    <h3>👥 إضافة صديق بالرمز</h3>
-                    <input id="friendTagI" placeholder="الرمز#0000">
+                    <h3>إضافة صديق</h3>
+                    <input id="friendTagI" placeholder="الاسم#0000">
                     <button class="btn" onclick="addFriend()">إرسال طلب</button>
                 </div>
                 <div id="reqsArea"></div>
-                <h4>قائمة الأصدقاء</h4>
+                <h4>الأصدقاء</h4>
                 <div id="friendsList"></div>
             </div>
 
             <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myAvatarDisplay" style="width:100px; height:100px; border-radius:50%; object-fit:cover;">
-                    <h2 id="userNameDisplay"></h2>
-                    <span id="userTagDisplayBig" class="user-tag" style="font-size: 16px; padding: 5px 10px;"></span>
-                    <hr style="margin:20px 0;">
+                    <img id="myAvatarDisplay" class="u-img" style="width:80px; height:80px;">
+                    <h3 id="userNameDisplay"></h3>
+                    <span id="userTagDisplay" class="user-tag"></span>
                     <input id="avatarUrlInput" placeholder="رابط صورتك الجديد">
                     <button class="btn" onclick="updateAvatar()">تحديث الصورة</button>
-                    <button class="btn" style="background:#f44336; margin-top:20px;" onclick="logout()">خروج</button>
+                    <button class="btn" style="background:red; margin-top:10px;" onclick="logout()">خروج</button>
                 </div>
             </div>
         </div>
@@ -91,13 +86,13 @@
     </div>
 
     <div id="chatBox" class="chat-pop hidden">
-        <div style="background:var(--main); color:white; padding:15px; display:flex; justify-content:space-between; border-radius: 15px 15px 0 0;">
-            <b id="chatTitle">دردشة</b> <span onclick="closeChat()" style="cursor:pointer">✕</span>
+        <div style="background:var(--main); color:white; padding:10px; display:flex; justify-content:space-between;">
+            <span id="chatTitle"></span> <span onclick="closeChat()" style="cursor:pointer">✕</span>
         </div>
-        <div id="msgsDisplay" style="flex:1; overflow-y:auto; padding:15px; background:#f9f9f9; display:flex; flex-direction:column;"></div>
-        <div style="padding:10px; display:flex; border-top:1px solid #eee;">
-            <input id="msgInput" style="margin:0; flex:1;" placeholder="اكتب رسالة...">
-            <button class="btn" style="width:auto; margin-right:10px;" onclick="sendMsg()">↗</button>
+        <div id="msgsDisplay" class="msg-box"></div>
+        <div style="padding:5px; display:flex;">
+            <input id="msgInput" style="margin:0;" placeholder="رسالة...">
+            <button class="btn" style="width:50px; margin-right:5px;" onclick="sendMsg()">↗</button>
         </div>
     </div>
 
@@ -112,13 +107,11 @@
     function login() {
         const u = document.getElementById('uInp').value.trim();
         const p = document.getElementById('pInp').value.trim();
-        if(!u || !p) return alert("أدخل البيانات");
-        
+        if(!u || !p) return alert("أكمل البيانات");
         db.ref('users/'+u).once('value', s => {
             const d = s.val();
             if(d && d.status === 'banned') return alert("محظور!");
             if(d && d.pass !== p) return alert("كلمة المرور خطأ!");
-
             user = d || { name:u, pass:p, tag: u+"#"+Math.floor(1000+Math.random()*9000), status:'active', avatar:'' };
             db.ref('users/'+u).set(user);
             localStorage.setItem('app_user', JSON.stringify(user));
@@ -130,10 +123,8 @@
         document.getElementById('authArea').classList.add('hidden');
         document.getElementById('appArea').classList.remove('hidden');
         document.getElementById('userNameDisplay').innerText = user.name;
-        document.getElementById('userTagDisplayBig').innerText = user.tag;
-        const ava = user.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-        document.getElementById('myAvatarDisplay').src = ava;
-        document.getElementById('postAvatar').src = ava;
+        document.getElementById('userTagDisplay').innerText = user.tag;
+        document.getElementById('myAvatarDisplay').src = user.avatar || 'https://via.placeholder.com/80';
         loadPosts(); loadRequests(); loadFriends();
     }
 
@@ -153,54 +144,51 @@
 
     function loadPosts() {
         db.ref('posts').on('value', s => {
-            const feed = document.getElementById('feed'); feed.innerHTML = "";
+            const f = document.getElementById('feed'); f.innerHTML = "";
             s.forEach(p => {
                 const d = p.val();
-                const likesCount = d.likes ? Object.keys(d.likes).length : 0;
-                const isLiked = d.likes && d.likes[user.name] ? 'active' : '';
-
-                feed.insertAdjacentHTML('afterbegin', `
+                const lCount = d.likes ? Object.keys(d.likes).length : 0;
+                f.insertAdjacentHTML('afterbegin', `
                     <div class="card">
                         <div class="user-info">
-                            <img src="${d.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" class="u-img">
+                            <img src="${d.avatar || 'https://via.placeholder.com/45'}" class="u-img">
                             <div>
                                 <span class="user-name">${d.u}</span>
-                                <span class="user-tag">${d.utag || ''}</span>
+                                <span class="user-tag">${d.utag || d.u+'#0000'}</span>
                             </div>
                         </div>
-                        <p style="white-space: pre-wrap;">${d.t}</p>
-                        ${d.img ? `<img src="${d.img}" class="post-img" onerror="this.style.display='none'">` : ''}
-                        <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-                        <button class="btn btn-like ${isLiked}" style="width:auto; background:#f0f2f5; color:#65676b; padding:8px 15px;" onclick="likePost('${p.key}')">👍 ${likesCount} لايك</button>
+                        <p>${d.t}</p>
+                        ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
+                        <button class="btn" style="width:auto; background:#eee; color:#333; margin-top:10px;" onclick="like('${p.key}')">👍 ${lCount} لايك</button>
                     </div>`);
             });
         });
     }
 
-    function likePost(id) {
-        const ref = db.ref('posts/'+id+'/likes/'+user.name);
-        ref.once('value', s => { if(s.exists()) ref.remove(); else ref.set(true); });
+    function like(id) {
+        const r = db.ref('posts/'+id+'/likes/'+user.name);
+        r.once('value', s => { if(s.exists()) r.remove(); else r.set(true); });
     }
 
     function addFriend() {
         const tag = document.getElementById('friendTagI').value.trim();
-        if(!tag || tag === user.tag) return alert("رمز غير صالح");
         db.ref('users').once('value', s => {
             let found = null;
             s.forEach(u => { if(u.val().tag === tag) found = u.key; });
-            if(found) { db.ref('reqs/'+found+'/'+user.name).set({from: user.name, tag: user.tag}); alert("تم الإرسال"); }
-            else alert("غير موجود");
+            if(found && found !== user.name) {
+                db.ref('reqs/'+found+'/'+user.name).set({n: user.name, t: user.tag});
+                alert("تم الإرسال");
+            } else alert("لم نجد الرمز");
         });
     }
 
     function loadRequests() {
         db.ref('reqs/'+user.name).on('value', s => {
-            const area = document.getElementById('reqsArea'); area.innerHTML = "";
+            const a = document.getElementById('reqsArea'); a.innerHTML = "";
             s.forEach(r => {
-                const d = r.val();
-                area.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center; background:#e7f3ff;">
-                    <span><b>${d.from}</b> <small>${d.tag}</small></span>
-                    <button class="btn" style="width:auto; padding:5px 15px;" onclick="accept('${d.from}')">قبول</button>
+                a.innerHTML += `<div class="card" style="display:flex; justify-content:space-between;">
+                    <span>${r.val().n} (${r.val().t})</span>
+                    <button class="btn" style="width:60px;" onclick="accept('${r.key}')">قبول</button>
                 </div>`;
             });
         });
@@ -214,30 +202,24 @@
 
     function loadFriends() {
         db.ref('users/'+user.name+'/friends').on('value', s => {
-            const list = document.getElementById('friendsList'); list.innerHTML = "";
+            const l = document.getElementById('friendsList'); l.innerHTML = "";
             s.forEach(f => {
-                db.ref('users/'+f.key).once('value', us => {
-                    const ud = us.val();
-                    list.innerHTML += `<div class="card" style="cursor:pointer; display:flex; align-items:center; gap:10px;" onclick="openChat('${f.key}')">
-                        <img src="${ud.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'}" style="width:30px; height:30px; border-radius:50%">
-                        <b>${f.key}</b> <span class="user-tag">${ud.tag}</span>
-                    </div>`;
-                });
+                l.innerHTML += `<div class="card" onclick="chat('${f.key}')">👤 ${f.key} (اضغط للدردشة)</div>`;
             });
         });
     }
 
-    function openChat(n) {
+    function chat(n) {
         activeChat = n; document.getElementById('chatBox').classList.remove('hidden');
         document.getElementById('chatTitle').innerText = n;
         const room = user.name < n ? user.name+"_"+n : n+"_"+user.name;
         db.ref('chats/'+room).on('value', s => {
-            const msgs = document.getElementById('msgsDisplay'); msgs.innerHTML = "";
+            const d = document.getElementById('msgsDisplay'); d.innerHTML = "";
             s.forEach(m => {
-                const style = m.val().s === user.name ? 'me' : 'him';
-                msgs.innerHTML += `<div class="msg ${style}">${m.val().t}</div>`;
+                const c = m.val().s === user.name ? 'm-me' : 'm-him';
+                d.innerHTML += `<div class="${c}">${m.val().t}</div>`;
             });
-            msgs.scrollTop = msgs.scrollHeight;
+            d.scrollTop = d.scrollHeight;
         });
     }
 
