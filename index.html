@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل Pro - النسخة المتكاملة</title>
+    <title>تواصل Pro - نسخة الصور المصلحة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root { --main: #0084ff; --bg: #f0f2f5; --card: #ffffff; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: var(--bg); margin: 0; padding-bottom: 70px; direction: rtl; }
         .container { max-width: 500px; margin: auto; padding: 12px; }
         .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -18,11 +18,11 @@
         .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 22px; cursor: pointer; color: #65676b; }
         .nav-i.active { color: var(--main); border-top: 3px solid var(--main); }
         .hidden { display: none !important; }
-        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; }
-        .post-img { width: 100%; border-radius: 10px; margin-top: 10px; border: 1px solid #eee; }
+        /* تحسين عرض الصور */
+        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #ddd; display: block; }
+        .post-img { width: 100%; border-radius: 10px; margin-top: 10px; max-height: 400px; object-fit: cover; background: #eee; }
         .action-bar { display: flex; border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; justify-content: space-around; }
-        .action-btn { background: none; border: none; color: #65676b; cursor: pointer; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 5px; }
-        .comment-box { background: #f0f2f5; border-radius: 10px; padding: 8px; margin-top: 5px; font-size: 13px; }
+        .action-btn { background: none; border: none; color: #65676b; cursor: pointer; font-weight: 600; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -30,9 +30,9 @@
     <div id="authArea" class="container">
         <div class="card" style="margin-top: 100px; text-align: center;">
             <h1 style="color: var(--main);">تواصل Pro</h1>
-            <input id="uInp" placeholder="اختر اسم مستخدم">
+            <input id="uInp" placeholder="اسم المستخدم">
             <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="startFresh()">دخول الآن</button>
+            <button class="btn" onclick="startFresh()">دخول</button>
         </div>
     </div>
 
@@ -45,8 +45,8 @@
 
         <div id="p-home" class="page container">
             <div class="card">
-                <textarea id="pTxt" rows="3" placeholder="بماذا تفكر؟"></textarea>
-                <input id="pImgUrl" placeholder="رابط صورة (اختياري)">
+                <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
+                <input id="pImgUrl" placeholder="رابط صورة المنشور">
                 <button class="btn" onclick="post()">نشر</button>
             </div>
             <div id="feed"></div>
@@ -54,17 +54,17 @@
 
         <div id="p-search" class="page container hidden">
             <div class="card">
-                <h3>🔍 ابحث عن أصدقاء</h3>
-                <input id="searchInp" placeholder="اكتب الاسم هنا..." oninput="searchUsers()">
+                <h3>🔍 البحث عن مستخدمين</h3>
+                <input id="searchInp" placeholder="اكتب الاسم..." oninput="searchUsers()">
                 <div id="searchResults"></div>
             </div>
         </div>
 
         <div id="p-me" class="page container hidden">
             <div class="card" style="text-align: center;">
-                <img id="myAv" class="u-img" style="width:100px; height:100px; margin-bottom:10px;">
+                <img id="myAv" class="u-img" style="width:100px; height:100px; margin:auto;" onerror="this.src='https://ui-avatars.com/api/?name=User&background=random'">
                 <h2 id="myName"></h2>
-                <input id="avInp" placeholder="رابط صورة بروفايل جديد">
+                <input id="avInp" placeholder="رابط صورتك الشخصية">
                 <button class="btn" onclick="updateAv()">تحديث الصورة</button>
                 <button class="btn" style="background:#ff4757; margin-top:10px;" onclick="logout()">خروج</button>
             </div>
@@ -77,20 +77,16 @@
     const db = firebase.database();
 
     let user = JSON.parse(localStorage.getItem('app_user'));
+    const defaultAv = "https://ui-avatars.com/api/?background=random&color=fff&name=";
 
-    // --- دخول جديد تماماً وبدون استرداد ---
     function startFresh() {
         const u = uInp.value.trim(), p = pInp.value.trim();
         if(!u || !p) return alert("أكمل البيانات");
-
-        // إنشاء البيانات الجديدة فوراً ومسح أي شيء قديم محلياً
         const freshUser = {
-            name: u,
-            pass: p,
-            avatar: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+            name: u, pass: p,
+            avatar: defaultAv + u,
             tag: u + "#" + Math.floor(1000 + Math.random() * 9000)
         };
-
         db.ref('users/' + u).set(freshUser).then(() => {
             localStorage.setItem('app_user', JSON.stringify(freshUser));
             location.reload();
@@ -125,28 +121,16 @@
             const f = document.getElementById('feed'); f.innerHTML = "";
             s.forEach(p => {
                 const d = p.val(), id = p.key;
-                let commentsHtml = "";
-                if(d.comments) {
-                    Object.values(d.comments).forEach(c => {
-                        commentsHtml += `<div class="comment-box"><b>${c.u}:</b> ${c.t}</div>`;
-                    });
-                }
-
                 f.insertAdjacentHTML('afterbegin', `
                     <div class="card">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                            <img src="${d.av}" class="u-img" style="width:35px;height:35px;">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <img src="${d.av}" class="u-img" style="width:35px;height:35px;" onerror="this.src='${defaultAv + d.u}'">
                             <b>${d.u}</b>
                         </div>
-                        <p style="margin:5px 0;">${d.t}</p>
-                        ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
+                        <p>${d.t}</p>
+                        ${d.img ? `<img src="${d.img}" class="post-img" onerror="this.style.display='none'">` : ''}
                         <div class="action-bar">
                             <button class="action-btn" onclick="like('${id}')">👍 (${d.likes || 0})</button>
-                            <button class="action-btn" onclick="toggleCom('${id}')">💬 تعليق</button>
-                        </div>
-                        <div id="comments-${id}" style="margin-top:10px;">${commentsHtml}</div>
-                        <div id="inpBox-${id}" class="hidden">
-                            <input id="ci-${id}" placeholder="اكتب تعليقاً..." onkeypress="if(event.key==='Enter') addCom('${id}')">
                         </div>
                     </div>`);
             });
@@ -155,34 +139,6 @@
 
     function like(id) {
         db.ref('posts/'+id+'/likes').transaction(c => (c || 0) + 1);
-    }
-
-    function toggleCom(id) { document.getElementById('inpBox-'+id).classList.toggle('hidden'); }
-
-    function addCom(id) {
-        const inp = document.getElementById('ci-'+id);
-        const val = inp.value.trim();
-        if(val) {
-            db.ref('posts/'+id+'/comments').push({ u: user.name, t: val });
-            inp.value = "";
-        }
-    }
-
-    function searchUsers() {
-        const q = searchInp.value.toLowerCase();
-        const res = document.getElementById('searchResults');
-        res.innerHTML = "";
-        if(!q) return;
-        db.ref('users').once('value', s => {
-            s.forEach(u => {
-                if(u.key.toLowerCase().includes(q)) {
-                    res.innerHTML += `<div class="card" style="display:flex;align-items:center;gap:10px;">
-                        <img src="${u.val().avatar}" class="u-img" style="width:30px;height:30px;">
-                        <b>${u.key}</b>
-                    </div>`;
-                }
-            });
-        });
     }
 
     function updateAv() {
