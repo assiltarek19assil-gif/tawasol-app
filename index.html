@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل Pro - النسخة المدمجة</title>
+    <title>تواصل Pro - النسخة النهائية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -14,9 +14,9 @@
         .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .header { background: var(--main); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; font-weight: bold; display: flex; justify-content: space-between; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; outline: none; }
-        .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; display: block; }
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 65px; border-top: 1px solid #ddd; z-index: 1000; }
-        .nav-i { flex: 1; text-align: center; line-height: 65px; font-size: 26px; cursor: pointer; color: #65676b; transition: 0.3s; }
+        .nav-i { flex: 1; text-align: center; line-height: 65px; font-size: 26px; cursor: pointer; color: #65676b; }
         .nav-i.active { color: var(--main); border-top: 3px solid var(--main); background: #f0f8ff; }
         .u-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #eee; }
         .hidden { display: none !important; }
@@ -29,11 +29,11 @@
 <body>
 
     <div id="authArea" class="container">
-        <div class="card" style="margin-top: 80px; text-align: center;">
+        <div class="card" style="margin-top: 100px; text-align: center;">
             <h1 style="color:var(--main)">تواصل Pro</h1>
-            <input id="uInp" placeholder="اسم المستخدم">
-            <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="startFresh()">دخول</button>
+            <input type="text" id="uInp" placeholder="اسم المستخدم">
+            <input type="password" id="pInp" placeholder="كلمة المرور">
+            <button class="btn" id="loginBtn">دخول الآن</button>
         </div>
     </div>
 
@@ -41,14 +41,14 @@
         <div class="header">
             <span id="myTagDisplay"></span>
             <span>تواصل Pro</span>
-            <span id="logoutTop" onclick="logout()" style="cursor:pointer; font-size:12px">خروج 🚪</span>
+            <span onclick="logoutNow()" style="cursor:pointer; font-size:12px">خروج 🚪</span>
         </div>
 
         <div class="container">
             <div id="p-home" class="page">
                 <div class="card">
                     <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
-                    <input id="pImg" placeholder="رابط صورة للمنشور (اختياري)">
+                    <input id="pImg" placeholder="رابط صورة (اختياري)">
                     <button class="btn" onclick="postNow()">نشر</button>
                 </div>
                 <div id="feed"></div>
@@ -57,20 +57,20 @@
             <div id="p-friends" class="page hidden">
                 <div class="card">
                     <h3>🔍 ابحث عن أصدقاء</h3>
-                    <input id="sInp" placeholder="اكتب الاسم هنا..." oninput="searchUsers()">
+                    <input id="sInp" placeholder="اكتب الاسم..." oninput="searchUsers()">
                     <div id="sRes"></div>
                 </div>
-                <div class="card"><h3>📩 طلبات الصداقة</h3><div id="reqs"></div></div>
+                <div class="card"><h3>📩 الطلبات</h3><div id="reqs"></div></div>
                 <div class="card"><h3>💬 الدردشات</h3><div id="fList"></div></div>
             </div>
 
             <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myProfileImg" class="u-img" style="width:120px; height:120px; margin-bottom:15px;">
+                    <img id="myProfileImg" class="u-img" style="width:100px; height:100px; margin:auto;">
                     <h2 id="myNameDisplay"></h2>
-                    <input id="newAvUrl" placeholder="رابط صورة الملف الشخصي الجديد">
+                    <input id="newAvUrl" placeholder="رابط صورة جديد">
                     <button class="btn" onclick="updateAvatar()">تحديث الصورة</button>
-                    <button class="btn" style="background:#ff4757; margin-top:20px;" onclick="logout()">تسجيل الخروج النهائي</button>
+                    <button class="btn" style="background:#ff4757; margin-top:20px;" onclick="logoutNow()">تسجيل الخروج</button>
                 </div>
             </div>
         </div>
@@ -84,18 +84,19 @@
 
     <div id="chat-room" class="hidden">
         <div class="header">
-            <span onclick="closeChat()" style="cursor:pointer">⬅ رجوع</span>
+            <span onclick="closeChat()">⬅ رجوع</span>
             <span id="chatTarget"></span>
             <span></span>
         </div>
         <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column;"></div>
-        <div class="card" style="margin:0; border-radius:0; padding:10px; display:flex; gap:5px;">
+        <div style="padding:10px; background:white; display:flex; gap:5px;">
             <input id="mInp" placeholder="رسالة..." style="margin:0">
-            <button class="btn" style="width:70px" onclick="sendMsg()">إرسال</button>
+            <button class="btn" style="width:80px" onclick="sendMsg()">إرسال</button>
         </div>
     </div>
 
 <script>
+    // تهيئة Firebase
     const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
@@ -104,16 +105,26 @@
     let activeChat = "";
     const getAv = (n) => `https://ui-avatars.com/api/?name=${n}&background=random&color=fff`;
 
-    window.startFresh = function() {
-        const u = uInp.value.trim(), p = pInp.value.trim();
+    // دالة الدخول المصلحة
+    document.getElementById('loginBtn').addEventListener('click', function() {
+        const u = document.getElementById('uInp').value.trim();
+        const p = document.getElementById('pInp').value.trim();
         if(!u || !p) return alert("أكمل البيانات");
-        const data = { name:u, pass:p, tag: u+"#"+Math.floor(1000+Math.random()*9000), av: getAv(u) };
-        db.ref('users/'+u).set(data).then(() => {
+        
+        const data = { 
+            name: u, 
+            pass: p, 
+            tag: u + "#" + Math.floor(1000 + Math.random() * 9000), 
+            av: getAv(u) 
+        };
+
+        db.ref('users/' + u).set(data).then(() => {
             localStorage.setItem('app_user', JSON.stringify(data));
             location.reload();
-        });
-    };
+        }).catch(err => alert("خطأ في الاتصال: " + err));
+    });
 
+    // تشغيل التطبيق إذا كان المستخدم مسجلاً
     if(user) {
         document.getElementById('authArea').classList.add('hidden');
         document.getElementById('appArea').classList.remove('hidden');
@@ -123,22 +134,28 @@
         loadPosts(); loadRequests(); loadFriends();
     }
 
+    // التنقل بين التابات
     window.showTab = function(id, el) {
         document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-        document.getElementById('p-'+id).classList.remove('hidden');
+        document.getElementById('p-' + id).classList.remove('hidden');
         document.querySelectorAll('.nav-i').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
     };
 
+    // النشر
     window.postNow = function() {
-        if(pTxt.value || pImg.value) {
-            db.ref('posts').push({ u:user.name, t:pTxt.value, img:pImg.value, av:user.av, tag:user.tag });
-            pTxt.value = ""; pImg.value = "";
+        const t = document.getElementById('pTxt').value;
+        const img = document.getElementById('pImg').value;
+        if(t || img) {
+            db.ref('posts').push({ u:user.name, t:t, img:img, av:user.av, tag:user.tag });
+            document.getElementById('pTxt').value = "";
+            document.getElementById('pImg').value = "";
         }
     };
 
     function loadPosts() {
         db.ref('posts').on('value', s => {
+            const feed = document.getElementById('feed');
             feed.innerHTML = "";
             s.forEach(p => {
                 const d = p.val();
@@ -148,35 +165,39 @@
                         <b>${d.u}</b> <small style="color:gray">${d.tag}</small>
                     </div>
                     <p>${d.t}</p>
-                    ${d.img ? `<img src="${d.img}" style="width:100%;border-radius:10px;" onerror="this.style.display='none'">` : ''}
+                    ${d.img ? `<img src="${d.img}" style="width:100%;border-radius:10px;">` : ''}
                 </div>`);
             });
         });
     }
 
+    // البحث والأصدقاء
     window.searchUsers = function() {
-        const q = sInp.value.toLowerCase(); sRes.innerHTML = ""; if(!q) return;
+        const q = document.getElementById('sInp').value.toLowerCase();
+        const res = document.getElementById('sRes');
+        res.innerHTML = ""; if(!q) return;
         db.ref('users').once('value', s => {
             s.forEach(u => {
                 if(u.key.toLowerCase().includes(q) && u.key !== user.name) {
-                    sRes.innerHTML += `<div class="card" style="display:flex;justify-content:space-between;align-items:center;">
-                        <span>${u.key}</span><button class="btn" onclick="sendReq('${u.key}')" style="width:70px;padding:5px">إضافة</button>
+                    res.innerHTML += `<div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>${u.key}</span><button onclick="sendReq('${u.key}')" style="background:var(--main); color:white; border:none; padding:5px 10px; border-radius:5px;">إضافة</button>
                     </div>`;
                 }
             });
         });
     };
 
-    window.sendReq = function(to) { db.ref('reqs/'+to+'/'+user.name).set(true); alert("تم إرسال الطلب"); };
+    window.sendReq = function(to) { db.ref('reqs/'+to+'/'+user.name).set(true); alert("تم الطلب"); };
 
     function loadRequests() {
         db.ref('reqs/'+user.name).on('value', s => {
-            reqs.innerHTML = s.exists() ? "" : "لا توجد طلبات واردة";
-            s.forEach(r => { reqs.innerHTML += `<div class="card" style="display:flex;justify-content:space-between"><span>${r.key}</span><button class="btn" style="width:60px;padding:5px" onclick="accept('${r.key}')">قبول</button></div>`; });
+            const reqsDiv = document.getElementById('reqs');
+            reqsDiv.innerHTML = s.exists() ? "" : "لا توجد طلبات";
+            s.forEach(r => { reqsDiv.innerHTML += `<div class="card" style="display:flex;justify-content:space-between"><span>${r.key}</span><button onclick="acceptFriend('${r.key}')">قبول</button></div>`; });
         });
     }
 
-    window.accept = function(n) {
+    window.acceptFriend = function(n) {
         db.ref('users/'+user.name+'/friends/'+n).set(true);
         db.ref('users/'+n+'/friends/'+user.name).set(true);
         db.ref('reqs/'+user.name+'/'+n).remove();
@@ -184,36 +205,40 @@
 
     function loadFriends() {
         db.ref('users/'+user.name+'/friends').on('value', s => {
-            fList.innerHTML = s.exists() ? "" : "ابدأ بالبحث عن أصدقاء للدردشة";
+            const fList = document.getElementById('fList');
+            fList.innerHTML = s.exists() ? "" : "ابحث عن أصدقاء";
             s.forEach(f => { fList.innerHTML += `<div class="card" onclick="openChat('${f.key}')" style="cursor:pointer">👤 ${f.key}</div>`; });
         });
     }
 
+    // الدردشة
     window.openChat = function(name) {
-        activeChat = name; chatTarget.innerText = name;
+        activeChat = name; document.getElementById('chatTarget').innerText = name;
         document.getElementById('chat-room').classList.remove('hidden');
         const id = [user.name, name].sort().join("_");
         db.ref('chats/'+id).on('value', s => {
-            chatMsgs.innerHTML = "";
+            const msgsDiv = document.getElementById('chatMsgs');
+            msgsDiv.innerHTML = "";
             s.forEach(m => {
                 const d = m.val(); const cls = d.s === user.name ? "me" : "him";
-                chatMsgs.innerHTML += `<div class="msg ${cls}">${d.t}</div>`;
+                msgsDiv.innerHTML += `<div class="msg ${cls}">${d.t}</div>`;
             });
-            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            msgsDiv.scrollTop = msgsDiv.scrollHeight;
         });
     };
 
     window.closeChat = function() { document.getElementById('chat-room').classList.add('hidden'); };
 
     window.sendMsg = function() {
-        if(!mInp.value) return;
+        const m = document.getElementById('mInp').value;
+        if(!m) return;
         const id = [user.name, activeChat].sort().join("_");
-        db.ref('chats/'+id).push({ s:user.name, t:mInp.value });
-        mInp.value = "";
+        db.ref('chats/'+id).push({ s:user.name, t:m });
+        document.getElementById('mInp').value = "";
     };
 
     window.updateAvatar = function() {
-        const url = newAvUrl.value.trim();
+        const url = document.getElementById('newAvUrl').value.trim();
         if(url) {
             db.ref('users/'+user.name+'/av').set(url).then(() => {
                 user.av = url;
@@ -223,4 +248,8 @@
         }
     };
 
-    window.logout = function() {
+    window.logoutNow = function() { localStorage.clear(); location.reload(); };
+
+</script>
+</body>
+</html>
