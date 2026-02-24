@@ -213,4 +213,35 @@
         db.ref('users/'+user.name+'/friends').on('value', s => {
             const l = document.getElementById('friendsList'); l.innerHTML = "<h4>الأصدقاء</h4>";
             s.forEach(f => {
-                l.innerHTML += `<div class="card" onclick="chat('${f.key}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">👤 ${f.key} (اضغط لل
+                l.innerHTML += `<div class="card" onclick="chat('${f.key}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">👤 ${f.key} (اضغط للدردشة)</div>`;
+            });
+        });
+    }
+
+    function chat(n) {
+        activeChat = n; document.getElementById('chatBox').classList.remove('hidden');
+        document.getElementById('chatTitle').innerText = "دردشة مع " + n;
+        const room = user.name < n ? user.name+"_"+n : n+"_"+user.name;
+        db.ref('chats/'+room).on('value', s => {
+            const d = document.getElementById('msgsDisplay'); d.innerHTML = "";
+            s.forEach(m => {
+                const side = m.val().s === user.name ? 'm-me' : 'm-him';
+                d.innerHTML += `<div class="msg ${side}">${m.val().t}</div>`;
+            });
+            d.scrollTop = d.scrollHeight;
+        });
+    }
+
+    function sendMsg() {
+        const t = document.getElementById('msgInput').value.trim();
+        if(!t || !activeChat) return;
+        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
+        db.ref('chats/'+room).push({ s:user.name, t:t });
+        document.getElementById('msgInput').value = "";
+    }
+
+    function closeChat() { document.getElementById('chatBox').classList.add('hidden'); }
+    function logout() { localStorage.clear(); location.reload(); }
+</script>
+</body>
+</html>
