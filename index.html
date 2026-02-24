@@ -3,140 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل Pro - النسخة الحديثة</title>
+    <title>تواصل Pro - النسخة المتكاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --main: #0084ff; --bg: #f7f8fa; --card: #ffffff; --text: #1c1e21; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { background: var(--bg); margin: 0; color: var(--text); padding-bottom: 70px; }
-        
-        /* الهيدر الجديد */
-        .header { background: var(--card); color: var(--main); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .header h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
-
-        .container { max-width: 550px; margin: auto; padding: 15px; }
-        
-        /* تحسين الكروت */
-        .card { background: var(--card); border-radius: 15px; padding: 18px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); border: 1px solid #edf0f5; }
-        
-        /* منطقة النشر */
-        textarea { width: 100%; border: none; background: #f0f2f5; border-radius: 12px; padding: 12px; resize: none; font-size: 15px; outline: none; margin-bottom: 10px; }
-        input { width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 10px; margin-bottom: 10px; outline: none; }
-        
-        .btn { background: var(--main); color: white; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; font-weight: 600; transition: 0.3s; width: 100%; }
-        .btn:active { transform: scale(0.98); }
-
-        /* تنسيق المنشورات */
-        .post-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .u-img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #eee; }
-        .user-info b { display: block; font-size: 15px; }
-        .user-tag { font-size: 11px; color: #8a8d91; background: #f0f2f5; padding: 2px 6px; border-radius: 5px; }
-        .post-img { width: calc(100% + 36px); margin: 10px -18px; display: block; max-height: 450px; object-fit: cover; }
-        
-        /* الناف بار السفلي */
-        .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; height: 65px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-i { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; color: #8a8d91; transition: 0.2s; }
-        .nav-i.active { color: var(--main); }
-        .notif-badge { position: absolute; top: 12px; right: 25%; background: #fa3e3e; color: white; font-size: 10px; padding: 2px 5px; border-radius: 10px; border: 2px solid white; }
-
+        :root { --main: #0084ff; --bg: #f0f2f5; --card: #ffffff; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); margin: 0; padding-bottom: 70px; direction: rtl; }
+        .container { max-width: 500px; margin: auto; padding: 12px; }
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #f9f9f9; }
+        .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; width: 100%; font-weight: bold; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 60px; border-top: 1px solid #ddd; z-index: 1000; }
+        .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 20px; cursor: pointer; color: #65676b; }
+        .nav-i.active { color: var(--main); border-top: 3px solid var(--main); }
         .hidden { display: none !important; }
-        
-        /* صفحة الإشعارات الجديدة */
-        .notif-item { display: flex; align-items: center; gap: 15px; padding: 12px; border-bottom: 1px solid #f0f2f5; }
-        .notif-item:last-child { border: none; }
-        .notif-dot { width: 8px; height: 8px; background: var(--main); border-radius: 50%; }
+        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; }
+        .action-bar { display: flex; border-top: 1px solid #eee; margin-top: 10px; padding-top: 8px; justify-content: space-around; }
+        .action-btn { background: none; border: none; color: #65676b; cursor: pointer; font-weight: 600; font-size: 14px; }
+        .comment-sec { background: #f0f2f5; border-radius: 8px; padding: 8px; margin-top: 8px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-    <div id="auth" class="container">
-        <div class="card" style="margin-top:80px; text-align:center">
-            <h1 style="color:var(--main); margin-bottom:5px;">تواصل Pro</h1>
-            <p style="color:#65676b; margin-bottom:20px;">أهلاً بك في مجتمعك الرقمي</p>
-            <input id="uInp" placeholder="اسم المستخدم">
+    <div id="authArea" class="container">
+        <div class="card" style="margin-top: 80px; text-align: center;">
+            <h2 style="color: var(--main);">تواصل Pro</h2>
+            <input id="uInp" placeholder="اسم المستخدم الجديد">
             <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="login()">دخول أو تسجيل جديد</button>
+            <button class="btn" onclick="register()">إنشاء حساب ودخول</button>
         </div>
     </div>
 
-    <div id="app" class="hidden">
-        <div class="header">
-            <h2>منصة تواصل</h2>
-            <div id="userNameTop" style="font-size: 14px; font-weight: 600; color: #65676b;"></div>
+    <div id="appArea" class="hidden">
+        <div id="p-home" class="page container">
+            <div class="card">
+                <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
+                <input id="pImgUrl" placeholder="رابط صورة (اختياري)">
+                <button class="btn" onclick="post()">نشر</button>
+            </div>
+            <div id="feed"></div>
         </div>
 
-        <div class="container">
-            <div id="p-home" class="page">
-                <div class="card">
-                    <textarea id="pTxt" rows="3" placeholder="بماذا تفكر؟"></textarea>
-                    <input id="pImgUrl" placeholder="رابط صورة (اختياري)">
-                    <button class="btn" onclick="post()">نشر المنشور</button>
-                </div>
-                <div id="feed"></div>
-            </div>
-
-            <div id="p-friends" class="page hidden">
-                <div class="card">
-                    <h3 style="margin-top:0">👥 إضافة صديق جديد</h3>
-                    <input id="friendTagI" placeholder="الاسم#0000">
-                    <button class="btn" onclick="addFriend()">إرسال طلب صداقة</button>
-                </div>
-                <div id="reqsArea"></div>
-                <div id="friendsList"></div>
-            </div>
-
-            <div id="p-notifs" class="page hidden">
-                <div class="card">
-                    <h3 style="margin-top:0">🔔 التنبيهات</h3>
-                    <div id="notifList"></div>
-                </div>
-            </div>
-
-            <div id="p-me" class="page hidden">
-                <div class="card" style="text-align:center;">
-                    <img id="myAvatarDisplay" class="u-img" style="width:110px; height:110px; border:4px solid var(--bg); margin-bottom:15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                    <h3 id="userNameDisplay" style="margin:0"></h3>
-                    <span id="userTagDisplay" class="user-tag"></span>
-                    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-                    <input id="avatarUrlInput" placeholder="ضع رابط صورتك الجديدة هنا">
-                    <button class="btn" onclick="updateAvatar()">تحديث البروفايل</button>
-                    <button class="btn" style="background:#f0f2f5; color:#4b4f56; margin-top:15px;" onclick="logout()">تسجيل الخروج</button>
-                </div>
+        <div id="p-search" class="page container hidden">
+            <div class="card">
+                <h3>🔍 البحث عن مستخدمين</h3>
+                <input id="searchInp" placeholder="اكتب اسم المستخدم..." oninput="searchUsers()">
+                <div id="searchResults" style="margin-top:10px;"></div>
             </div>
         </div>
 
-        <nav class="nav">
+        <div id="p-me" class="page container hidden">
+            <div class="card" style="text-align: center;">
+                <img id="myAvatar" class="u-img" style="width:100px; height:100px;">
+                <h3 id="myName"></h3>
+                <input id="newAv" placeholder="رابط صورة بروفايل جديد">
+                <button class="btn" onclick="updateAv()">تحديث الصورة</button>
+                <button class="btn" style="background:#ff4757; margin-top:10px;" onclick="logout()">خروج</button>
+            </div>
+        </div>
+
+        <div class="nav">
             <div class="nav-i active" onclick="tab('home', this)">🏠</div>
-            <div class="nav-i" onclick="tab('friends', this)">👥</div>
-            <div class="nav-i" onclick="tab('notifs', this)" style="position:relative">
-                🔔 <span id="notifBadge" class="notif-badge hidden">0</span>
-            </div>
+            <div class="nav-i" onclick="tab('search', this)">🔍</div>
             <div class="nav-i" onclick="tab('me', this)">⚙️</div>
-        </nav>
+        </div>
     </div>
 
 <script>
     const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    if(!firebase.apps.length) firebase.initializeApp(config);
+    if (!firebase.apps.length) firebase.initializeApp(config);
     const db = firebase.database();
-
     let user = JSON.parse(localStorage.getItem('app_user'));
 
-    function login() {
+    function register() {
         const u = uInp.value.trim(), p = pInp.value.trim();
-        if(!u || !p) return alert("يرجى إدخال البيانات");
-        db.ref('users/'+u).once('value', s => {
-            let d = s.val();
-            if(d && d.pass !== p) return alert("كلمة المرور خاطئة");
-            if(!d) {
-                d = { name:u, pass:p, tag:u+"#"+Math.floor(1000+Math.random()*9000), avatar:"", status:"active" };
-                db.ref('users/'+u).set(d);
-            }
-            localStorage.setItem('app_user', JSON.stringify(d));
+        if(!u || !p) return alert("أكمل البيانات");
+        const newUser = { name: u, pass: p, avatar: "https://via.placeholder.com/100" };
+        db.ref('users/' + u).set(newUser).then(() => {
+            localStorage.setItem('app_user', JSON.stringify(newUser));
             location.reload();
         });
     }
 
-    if(user) {
-        document.
+    if (user) {
+        document.getElementById('authArea').classList.add('hidden');
+        document.getElementById('appArea').classList.remove('hidden');
+        document.getElementById('myName').innerText = user.name;
+        document.getElementById('myAvatar').src = user.avatar;
+        loadPosts();
+    }
+
+    function tab(pId, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById('p-' + pId).classList.remove('hidden');
+        document.querySelectorAll('.nav-i').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function post() {
+        const t = pTxt.value, img = pImgUrl.value;
+        if(t || img) {
+            db.ref('posts').push({ u: user.name, t, img, av: user.avatar, likes: 0 });
+            pTxt.value = ""; pImgUrl.value = "";
+        }
+    }
+
+    function loadPosts() {
+        db.ref('posts').on('value', s => {
+            const f = document.getElementById('feed'); f.innerHTML = "";
+            s.forEach(p => {
+                const d = p.val(), id = p.key;
+                let coms = ""; 
+                if(d.comments) Object.values(d.comments).forEach(c => coms += `<div class="comment-sec"><b>${c.u}:</b> ${c.t}</div>`);
+                
+                f.insertAdjacentHTML('afterbegin', `
+                    <div class="card">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <img src="${d.av}" class="u-img" style="width:35px;height:35px;">
+                            <b>${d.u}</b>
+                        </div>
+                        <p>${d.t}</p>
+                        ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
+                        <div class="action-bar">
+                            <button class="action-btn" onclick="like('${id}')">👍 إعجاب (${d.likes || 0})</button>
+                            <button class="action-btn" onclick="showComInp('${id}')">💬 تعليق</button>
+                        </div>
+                        <div id="comArea-${id}">${coms}</div>
+                        <div id="inp-${id}" class="hidden">
+                            <input id="ci-${id}" placeholder="اكتب تعليقاً..." onkeypress="if(event.key==='Enter') addCom('${id}')">
+                        </div>
+                    </div>`);
+            });
+        });
+    }
+
+    function like(id) {
+        const ref = db.ref('posts/'+id+'/likes');
+        ref.transaction(c => (c || 0) + 1);
+    }
+
+    function showComInp(id) { document.getElementById('inp-'+id).classList.toggle('hidden'); }
+
+    function addCom(id) {
+        const inp = document.getElementById('ci-'+id);
+        if(inp.value.trim()) {
+            db.ref('posts/'+id+'/comments').push({ u: user.name, t: inp.value });
+            inp.value = "";
+        }
+    }
+
+    function searchUsers() {
+        const q = searchInp.value.toLowerCase();
+        const res = document.getElementById('searchResults');
+        res.innerHTML = "";
+        if(!q) return;
+        db.ref('users').once('value', s => {
+            s.forEach(u => {
+                if(
