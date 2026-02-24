@@ -116,4 +116,122 @@
         const u = uInp.value.trim(), p = pInp.value.trim();
         if(!u || !p) return alert("أكمل البيانات");
         const data = { name: u, pass: p, tag: u + "#" + Math.floor(1000+Math.random()*9000), av: getAv(u) };
-        db.ref('users
+        db.ref('users/'+u).set(data).then(() => { localStorage.setItem('app_user', JSON.stringify(data)); location.reload(); });
+    });
+
+    if(user) {
+        document.getElementById('authArea').classList.add('hidden');
+        document.getElementById('appArea').classList.remove('hidden');
+        document.getElementById('myTagDisplay').innerText = user.tag;
+        document.getElementById('myNameDisplay').innerText = user.name;
+        document.getElementById('myProfileImg').src = user.av || getAv(user.name);
+        loadPosts(); loadRequests(); loadFriends();
+    }
+
+    // الدالة المنقذة: تضمن إخفاء كل شيء وإظهار الصفحة المطلوبة فقط
+    window.showTab = function(id, el) {
+        // إخفاء كافة الصفحات
+        const pages = document.getElementsByClassName('page-content');
+        for(let i=0; i<pages.length; i++) { pages[i].classList.add('hidden'); }
+        
+        // إظهار الصفحة المختارة
+        document.getElementById('p-' + id).classList.remove('hidden');
+        
+        // تحديث شكل الأزرار
+        const navs = document.getElementsByClassName('nav-i');
+        for(let i=0; i<navs.length; i++) { navs[i].classList.remove('active'); }
+        el.classList.add('active');
+    };
+
+    window.postNow = function() {
+        const t = pTxt.value, img = pImg.value;
+        if(t || img) {
+            db.ref('posts').push({ u:user.name, t:t, img:img, av:user.av, tag:user.tag, likes: 0 });
+            pTxt.value = ""; pImg.value = "";
+        }
+    };
+
+    function loadPosts() {
+        db.ref('posts').on('value', s => {
+            feed.innerHTML = "";
+            s.forEach(p => {
+                const d = p.val(); const id = p.key;
+                feed.insertAdjacentHTML('afterbegin', `<div class="card">
+                    <b>${d.u}</b> <small>${d.tag}</small>
+                    <p>${d.t}</p>
+                    ${d.img ? `<img src="${d.img}" style="width:100%; border-radius:10px;">` : ''}
+                    <button onclick="db.ref('posts/${id}/likes').transaction(c=>(c||0)+1)" style="border:none; background:none; color:blue; cursor:pointer;">👍 ${d.likes || 0}</button>
+                </div>`);
+            });
+        });
+    }
+
+    window.searchUsers = function() {
+        const q = sInp.value.toLowerCase(); sRes.innerHTML = ""; if(!q) return;
+        db.ref('users').once('value', s => {
+            s.forEach(u => {
+                if(u.key.toLowerCase().includes(q) && u.key !== user.name) {
+                    sRes.innerHTML += `<div class="card" style="display:flex;justify-content:space-between"><span>${u.key}</span><button onclick="sendReq('${u.key}')">إضافة</button></div>`;
+                }
+            });
+        });
+    };
+
+    window.sendReq = function(to) { db.ref('reqs/'+to+'/'+user.name).set(true); alert("تم الطلب"); };
+
+    function loadRequests() {
+        db.ref('reqs/'+user.name).on('value', s => {
+            reqs.innerHTML = s.exists() ? "" : "لا توجد طلبات";
+            s.forEach(r => { reqs.innerHTML += `<button onclick="acceptFriend('${r.key}')">قبول ${r.key}</button>`; });
+        });
+    }
+
+    window.acceptFriend = function(n) {
+        db.ref('users/'+user.name+'/friends/'+n).set(true);
+        db.ref('users/'+n+'/friends/'+user.name).set(true);
+        db.ref('reqs/'+user.name+'/'+n).remove();
+    };
+
+    function loadFriends() {
+        db.ref('users/'+user.name+'/friends').on('value', s => {
+            fList.innerHTML = s.exists() ? "" : "أضف أصدقاء";
+            s.forEach(f => { fList.innerHTML += `<div class="card" onclick="openChat('${f.key}')">👤 ${f.key}</div>`; });
+        });
+    }
+
+    window.openChat = function(name) {
+        activeChat = name; chatTarget.innerText = name;
+        document.getElementById('chat-room').classList.remove('hidden');
+        const id = [user.name, name].sort().join("_");
+        db.ref('chats/'+id).on('value', s => {
+            chatMsgs.innerHTML = "";
+            s.forEach(m => {
+                const d = m.val();
+                chatMsgs.innerHTML += `<div class="msg ${d.s===user.name?'me':'him'}">${d.t}</div>`;
+            });
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
+        });
+    };
+
+    window.closeChat = function() { document.getElementById('chat-room').classList.add('hidden'); };
+
+    window.sendMsg = function() {
+        if(!mInp.value) return;
+        const id = [user.name, activeChat].sort().join("_");
+        db.ref('chats/'+id).push({ s:user.name, t:mInp.value });
+        mInp.value = "";
+    };
+
+    window.updateAvatar = function() {
+        const url = newAvUrl.value.trim();
+        if(url) {
+            db.ref('users/'+user.name+'/av').set(url).then(() => {
+                user.av = url; localStorage.setItem('app_user', JSON.stringify(user)); location.reload();
+            });
+        }
+    };
+
+    window.logoutNow = function() { localStorage.clear(); location.reload(); };
+</script>
+</body>
+</html>
