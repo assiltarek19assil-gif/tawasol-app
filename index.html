@@ -3,43 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تواصل Pro</title>
-    
+    <title>تواصل Pro - النسخة الكاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        :root { --main: #1877f2; --bg: #f0f2f5; --white: #ffffff; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 70px; }
+        :root { --main: #1877f2; --bg: #f0f2f5; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: var(--bg); margin: 0; padding-bottom: 70px; }
         .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 600px; margin: auto; padding: 10px; }
-        .card { background: var(--white); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #ddd; }
-        .user-info { display: flex; align-items: center; gap: 10px; }
-        .user-name { font-weight: bold; display: block; }
-        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 1px 5px; border-radius: 4px; display: inline-block; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 16px; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 2px 5px; border-radius: 4px; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
         .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; display: block; }
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; }
-        .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; }
+        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; background: #eee; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; z-index: 1000; }
+        .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; color: #65676b; }
         .hidden { display: none !important; }
-        /* تصميم الدردشة */
-        .chat-pop { position: fixed; bottom: 65px; left: 10px; right: 10px; max-width: 350px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; }
-        .msg-box { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; }
-        .m-me { align-self: flex-start; background: #dcf8c6; padding: 8px; border-radius: 10px; margin: 4px; }
-        .m-him { align-self: flex-end; background: #eee; padding: 8px; border-radius: 10px; margin: 4px; }
+        
+        /* تصميم الدردشة المتطور */
+        .chat-pop { position: fixed; bottom: 65px; left: 10px; right: 10px; max-width: 380px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; overflow: hidden; border: 1px solid #ddd; }
+        .chat-header { background: var(--main); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .msgs-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; background: #f9f9f9; }
+        .m { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; line-height: 1.4; position: relative; }
+        .m-me { align-self: flex-start; background: #dcf8c6; border-bottom-left-radius: 2px; }
+        .m-him { align-self: flex-end; background: #fff; border: 1px solid #eee; border-bottom-right-radius: 2px; }
     </style>
 </head>
 <body>
 
     <div id="authArea" class="container">
         <div class="card" style="margin-top: 50px; text-align: center;">
-            <h2 style="color: var(--main);">تواصل</h2>
+            <h2 style="color: var(--main);">تواصل Pro</h2>
             <input id="uInp" type="text" placeholder="اسم المستخدم">
             <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="login()">دخول الآن</button>
+            <button class="btn" onclick="login()">دخول</button>
         </div>
     </div>
 
@@ -48,32 +47,33 @@
         <div class="container">
             <div id="p-home" class="page">
                 <div class="card">
-                    <textarea id="pTxt" placeholder="اكتب شيئاً..."></textarea>
-                    <input id="pImgUrl" placeholder="رابط صورة مباشر (اختياري)">
-                    <button class="btn" onclick="post()">نشر</button>
+                    <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
+                    <input id="pImgUrl" placeholder="ضع رابط الصورة هنا (jpg/png)">
+                    <button class="btn" onclick="post()">نشر المنشور</button>
                 </div>
                 <div id="feed"></div>
             </div>
 
             <div id="p-friends" class="page hidden">
                 <div class="card">
-                    <h3>إضافة صديق</h3>
+                    <h3>👥 إضافة صديق</h3>
                     <input id="friendTagI" placeholder="الاسم#0000">
                     <button class="btn" onclick="addFriend()">إرسال طلب</button>
                 </div>
                 <div id="reqsArea"></div>
-                <h4>الأصدقاء</h4>
+                <h4>قائمة الأصدقاء</h4>
                 <div id="friendsList"></div>
             </div>
 
             <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myAvatarDisplay" class="u-img" style="width:80px; height:80px;">
+                    <img id="myAvatarDisplay" class="u-img" style="width:90px; height:90px; border:3px solid var(--main);">
                     <h3 id="userNameDisplay"></h3>
-                    <span id="userTagDisplay" class="user-tag"></span>
+                    <span id="userTagDisplay" class="user-tag" style="font-size:14px; padding:5px 10px;"></span>
+                    <hr>
                     <input id="avatarUrlInput" placeholder="رابط صورتك الجديد">
                     <button class="btn" onclick="updateAvatar()">تحديث الصورة</button>
-                    <button class="btn" style="background:red; margin-top:10px;" onclick="logout()">خروج</button>
+                    <button class="btn" style="background:#ff4757; margin-top:15px;" onclick="logout()">خروج</button>
                 </div>
             </div>
         </div>
@@ -86,12 +86,13 @@
     </div>
 
     <div id="chatBox" class="chat-pop hidden">
-        <div style="background:var(--main); color:white; padding:10px; display:flex; justify-content:space-between;">
-            <span id="chatTitle"></span> <span onclick="closeChat()" style="cursor:pointer">✕</span>
+        <div class="chat-header">
+            <span id="chatTitle">الدردشة</span>
+            <span onclick="closeChat()" style="cursor:pointer; font-size:20px;">✕</span>
         </div>
-        <div id="msgsDisplay" class="msg-box"></div>
-        <div style="padding:5px; display:flex;">
-            <input id="msgInput" style="margin:0;" placeholder="رسالة...">
+        <div id="msgsDisplay" class="msgs-area"></div>
+        <div style="padding:10px; display:flex; background:white; border-top:1px solid #eee;">
+            <input id="msgInput" style="margin:0; flex:1;" placeholder="اكتب رسالة...">
             <button class="btn" style="width:50px; margin-right:5px;" onclick="sendMsg()">↗</button>
         </div>
     </div>
@@ -107,11 +108,11 @@
     function login() {
         const u = document.getElementById('uInp').value.trim();
         const p = document.getElementById('pInp').value.trim();
-        if(!u || !p) return alert("أكمل البيانات");
+        if(!u || !p) return alert("يرجى إكمال البيانات");
         db.ref('users/'+u).once('value', s => {
             const d = s.val();
-            if(d && d.status === 'banned') return alert("محظور!");
-            if(d && d.pass !== p) return alert("كلمة المرور خطأ!");
+            if(d && d.status === 'banned') return alert("أنت محظور!");
+            if(d && d.pass !== p) return alert("كلمة المرور خاطئة!");
             user = d || { name:u, pass:p, tag: u+"#"+Math.floor(1000+Math.random()*9000), status:'active', avatar:'' };
             db.ref('users/'+u).set(user);
             localStorage.setItem('app_user', JSON.stringify(user));
@@ -124,7 +125,7 @@
         document.getElementById('appArea').classList.remove('hidden');
         document.getElementById('userNameDisplay').innerText = user.name;
         document.getElementById('userTagDisplay').innerText = user.tag;
-        document.getElementById('myAvatarDisplay').src = user.avatar || 'https://via.placeholder.com/80';
+        document.getElementById('myAvatarDisplay').src = user.avatar || 'https://via.placeholder.com/90';
         loadPosts(); loadRequests(); loadFriends();
     }
 
@@ -133,11 +134,12 @@
         document.getElementById('p-'+t).classList.remove('hidden');
     }
 
+    // إصلاح النشر مع الصورة والتاج
     function post() {
         const t = document.getElementById('pTxt').value.trim();
         const img = document.getElementById('pImgUrl').value.trim();
         if(t || img) {
-            db.ref('posts').push({ u:user.name, utag:user.tag, t:t, img:img, avatar:user.avatar });
+            db.ref('posts').push({ u:user.name, utag:user.tag, t:t, img:img, avatar:user.avatar || '' });
             document.getElementById('pTxt').value = ""; document.getElementById('pImgUrl').value = "";
         }
     }
@@ -148,18 +150,21 @@
             s.forEach(p => {
                 const d = p.val();
                 const lCount = d.likes ? Object.keys(d.likes).length : 0;
+                const isLiked = d.likes && d.likes[user.name] ? 'color:var(--main); font-weight:bold;' : '';
+                
                 f.insertAdjacentHTML('afterbegin', `
                     <div class="card">
-                        <div class="user-info">
+                        <div style="display:flex; align-items:center; gap:10px;">
                             <img src="${d.avatar || 'https://via.placeholder.com/45'}" class="u-img">
-                            <div>
-                                <span class="user-name">${d.u}</span>
+                            <div style="display:flex; flex-direction:column;">
+                                <span style="font-weight:bold;">${d.u}</span>
                                 <span class="user-tag">${d.utag || d.u+'#0000'}</span>
                             </div>
                         </div>
-                        <p>${d.t}</p>
-                        ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
-                        <button class="btn" style="width:auto; background:#eee; color:#333; margin-top:10px;" onclick="like('${p.key}')">👍 ${lCount} لايك</button>
+                        <p style="margin:10px 0;">${d.t}</p>
+                        ${d.img ? `<img src="${d.img}" class="post-img" onerror="this.style.display='none'">` : ''}
+                        <hr style="border:0; border-top:1px solid #eee;">
+                        <button class="btn" style="width:auto; background:none; color:#65676b; ${isLiked}" onclick="like('${p.key}')">👍 ${lCount} لايك</button>
                     </div>`);
             });
         });
@@ -170,6 +175,31 @@
         r.once('value', s => { if(s.exists()) r.remove(); else r.set(true); });
     }
 
+    // نظام الدردشة المصلح
+    function chat(n) {
+        activeChat = n;
+        document.getElementById('chatBox').classList.remove('hidden');
+        document.getElementById('chatTitle').innerText = "دردشة مع " + n;
+        const room = user.name < n ? user.name+"_"+n : n+"_"+user.name;
+        db.ref('chats/'+room).off(); // إغلاق أي مستمع قديم
+        db.ref('chats/'+room).on('value', s => {
+            const d = document.getElementById('msgsDisplay'); d.innerHTML = "";
+            s.forEach(m => {
+                const side = m.val().s === user.name ? 'm-me' : 'm-him';
+                d.innerHTML += `<div class="m ${side}">${m.val().t}</div>`;
+            });
+            d.scrollTop = d.scrollHeight;
+        });
+    }
+
+    function sendMsg() {
+        const t = document.getElementById('msgInput').value.trim();
+        if(!t || !activeChat) return;
+        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
+        db.ref('chats/'+room).push({ s:user.name, t:t });
+        document.getElementById('msgInput').value = "";
+    }
+
     function addFriend() {
         const tag = document.getElementById('friendTagI').value.trim();
         db.ref('users').once('value', s => {
@@ -177,8 +207,8 @@
             s.forEach(u => { if(u.val().tag === tag) found = u.key; });
             if(found && found !== user.name) {
                 db.ref('reqs/'+found+'/'+user.name).set({n: user.name, t: user.tag});
-                alert("تم الإرسال");
-            } else alert("لم نجد الرمز");
+                alert("تم إرسال الطلب بنجاح!");
+            } else alert("الرمز غير موجود أو أنه رمزك!");
         });
     }
 
@@ -186,9 +216,9 @@
         db.ref('reqs/'+user.name).on('value', s => {
             const a = document.getElementById('reqsArea'); a.innerHTML = "";
             s.forEach(r => {
-                a.innerHTML += `<div class="card" style="display:flex; justify-content:space-between;">
-                    <span>${r.val().n} (${r.val().t})</span>
-                    <button class="btn" style="width:60px;" onclick="accept('${r.key}')">قبول</button>
+                a.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; background:#e7f3ff;">
+                    <span><b>${r.val().n}</b> (${r.val().t})</span>
+                    <button class="btn" style="width:70px;" onclick="accept('${r.key}')">قبول</button>
                 </div>`;
             });
         });
@@ -204,31 +234,12 @@
         db.ref('users/'+user.name+'/friends').on('value', s => {
             const l = document.getElementById('friendsList'); l.innerHTML = "";
             s.forEach(f => {
-                l.innerHTML += `<div class="card" onclick="chat('${f.key}')">👤 ${f.key} (اضغط للدردشة)</div>`;
+                l.innerHTML += `<div class="card" onclick="chat('${f.key}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+                    <div style="width:10px; height:10px; background:#2ecc71; border-radius:50%;"></div>
+                    <span>👤 ${f.key}</span>
+                </div>`;
             });
         });
-    }
-
-    function chat(n) {
-        activeChat = n; document.getElementById('chatBox').classList.remove('hidden');
-        document.getElementById('chatTitle').innerText = n;
-        const room = user.name < n ? user.name+"_"+n : n+"_"+user.name;
-        db.ref('chats/'+room).on('value', s => {
-            const d = document.getElementById('msgsDisplay'); d.innerHTML = "";
-            s.forEach(m => {
-                const c = m.val().s === user.name ? 'm-me' : 'm-him';
-                d.innerHTML += `<div class="${c}">${m.val().t}</div>`;
-            });
-            d.scrollTop = d.scrollHeight;
-        });
-    }
-
-    function sendMsg() {
-        const t = document.getElementById('msgInput').value.trim();
-        if(!t || !activeChat) return;
-        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
-        db.ref('chats/'+room).push({ s:user.name, t:t });
-        document.getElementById('msgInput').value = "";
     }
 
     function updateAvatar() {
