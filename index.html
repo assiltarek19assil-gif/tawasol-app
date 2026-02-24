@@ -3,235 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تواصل Elite - النسخة المصلحة</title>
+    <title>منصة تواصل Pro</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
-        :root { --primary: #0084ff; --bg: #f0f2f5; --card: #ffffff; }
-        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); margin: 0; padding-bottom: 80px; direction: rtl; }
-        
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 2000; font-weight: bold; display: flex; justify-content: space-between; }
-        .container { max-width: 500px; margin: auto; padding: 12px; }
-        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        
-        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 10px; outline: none; }
-        .btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
-        
-        /* شريط التنقل */
-        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 70px; border-top: 1px solid #ddd; z-index: 3000; }
-        .nav-i { flex: 1; text-align: center; display: flex; flex-direction: column; justify-content: center; cursor: pointer; color: #65676b; }
-        .nav-i.active { color: var(--primary); border-top: 3px solid var(--primary); }
-        .nav-i span { font-size: 24px; }
-
-        .u-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: #eee; }
+        :root { --main: #1877f2; --bg: #f0f2f5; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background: var(--bg); margin: 0; padding-bottom: 70px; }
+        .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
+        .container { max-width: 600px; margin: auto; padding: 10px; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; }
+        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 2px 5px; border-radius: 4px; display: inline-block; }
+        input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+        .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 5px; }
+        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; background: #fafafa; }
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; z-index: 1000; }
+        .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; color: #65676b; }
+        .nav-i.active { color: var(--main); border-top: 3px solid var(--main); }
         .hidden { display: none !important; }
-        
-        /* غرفة الدردشة */
-        #chat-room { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #e5ddd5; z-index: 4000; display: flex; flex-direction: column; }
-        .msg { margin: 8px; padding: 10px; border-radius: 12px; max-width: 80%; }
-        .me { background: #dcf8c6; align-self: flex-start; }
-        .him { background: #fff; align-self: flex-end; border: 1px solid #ddd; }
+        .chat-pop { position: fixed; bottom: 65px; left: 10px; right: 10px; max-width: 380px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; border: 1px solid #ddd; }
+        .m-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; background: #f9f9f9; }
+        .msg { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; }
+        .m-me { align-self: flex-start; background: #dcf8c6; }
+        .m-him { align-self: flex-end; background: #fff; border: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div id="authArea" class="container">
-        <div class="card" style="margin-top: 80px; text-align: center;">
-            <h1 style="color:var(--primary)">Elite</h1>
-            <input type="text" id="uInp" placeholder="اسم المستخدم">
-            <input type="password" id="pInp" placeholder="كلمة المرور">
-            <button class="btn" id="loginBtn">دخول</button>
+        <div class="card" style="margin-top: 50px; text-align: center;">
+            <h2 style="color: var(--main);">تواصل Pro</h2>
+            <input id="uInp" type="text" placeholder="اسم المستخدم">
+            <input id="pInp" type="password" placeholder="كلمة المرور">
+            <button class="btn" onclick="login()">دخول</button>
         </div>
     </div>
 
     <div id="appArea" class="hidden">
-        <div class="header">
-            <span id="myTagDisplay" style="font-size:11px"></span>
-            <span>تواصل Elite</span>
-            <span onclick="logoutNow()" style="cursor:pointer">🚪</span>
-        </div>
-
+        <div class="header">منصة تواصل Pro</div>
         <div class="container">
-            <div id="p-home" class="page-content">
+            
+            <div id="p-home" class="page">
                 <div class="card">
                     <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
-                    <input id="pImg" placeholder="رابط صورة (اختياري)">
-                    <button class="btn" onclick="postNow()">نشر</button>
+                    <input id="pImgUrl" placeholder="رابط صورة للمنشور (اختياري)">
+                    <button class="btn" onclick="post()">نشر</button>
                 </div>
                 <div id="feed"></div>
             </div>
 
-            <div id="p-friends" class="page-content hidden">
+            <div id="p-friends" class="page hidden">
                 <div class="card">
-                    <h3>🔍 البحث</h3>
-                    <input id="sInp" placeholder="ابحث عن صديق..." oninput="searchUsers()">
-                    <div id="sRes"></div>
+                    <h3>👥 البحث عن أصدقاء</h3>
+                    <input id="friendTagI" placeholder="ادخل الاسم#0000">
+                    <button class="btn" onclick="addFriend()">إرسال طلب صداقة</button>
                 </div>
-                <div class="card"><h3>📨 الطلبات</h3><div id="reqs"></div></div>
-                <div class="card"><h3>💬 الدردشات</h3><div id="fList"></div></div>
+                <div id="reqsArea"></div>
+                <div id="friendsList"></div>
             </div>
 
-            <div id="p-me" class="page-content hidden">
+            <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myProfileImg" class="u-img" style="width:120px; height:120px; margin-bottom:15px;">
-                    <h2 id="myNameDisplay"></h2>
-                    <input id="newAvUrl" placeholder="رابط صورة جديد">
+                    <img id="myAvatarDisplay" class="u-img" style="width:100px; height:100px; border:3px solid var(--main); margin-bottom:10px;">
+                    <h3 id="userNameDisplay" style="margin:5px 0;"></h3>
+                    <span id="userTagDisplay" class="user-tag"></span>
+                    <hr style="margin: 15px 0;">
+                    <input id="avatarUrlInput" placeholder="رابط صورتك الشخصية الجديد">
                     <button class="btn" onclick="updateAvatar()">تحديث الصورة</button>
-                    <button class="btn" style="background:#ff4757; margin-top:20px;" onclick="logoutNow()">خروج</button>
+                    <button class="btn" style="background:#ff4757; margin-top:20px;" onclick="logout()">تسجيل الخروج 🚪</button>
                 </div>
             </div>
         </div>
 
         <div class="nav">
-            <div class="nav-i active" onclick="showTab('home', this)"><span>🏠</span></div>
-            <div class="nav-i" onclick="showTab('friends', this)"><span>💬</span></div>
-            <div class="nav-i" onclick="showTab('me', this)"><span>⚙️</span></div>
+            <div id="n-home" class="nav-i active" onclick="tab('home')">🏠</div>
+            <div id="n-friends" class="nav-i" onclick="tab('friends')">👥</div>
+            <div id="n-me" class="nav-i" onclick="tab('me')">⚙️</div>
         </div>
     </div>
 
-    <div id="chat-room" class="hidden">
-        <div class="header">
-            <span onclick="closeChat()">⬅ رجوع</span>
-            <span id="chatTarget"></span>
-            <span></span>
+    <div id="chatBox" class="chat-pop hidden">
+        <div style="background:var(--main); color:white; padding:12px; display:flex; justify-content:space-between;">
+            <b id="chatTitle">الدردشة</b> <span onclick="closeChat()" style="cursor:pointer">✕</span>
         </div>
-        <div id="chatMsgs" style="flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column;"></div>
-        <div class="card" style="margin:0; border-radius:0; padding:10px; display:flex; gap:5px;">
-            <input id="mInp" placeholder="رسالة..." style="margin:0">
-            <button class="btn" style="width:70px" onclick="sendMsg()">إرسال</button>
+        <div id="msgsDisplay" class="m-area"></div>
+        <div style="padding:10px; display:flex; background:white;">
+            <input id="msgInput" style="margin:0; flex:1;" placeholder="اكتب رسالة...">
+            <button class="btn" style="width:50px; margin-right:5px; margin-bottom:0;" onclick="sendMsg()">↗</button>
         </div>
     </div>
 
 <script>
-    const firebaseConfig = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
-    firebase.initializeApp(firebaseConfig);
+    const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
+    if (!firebase.apps.length) firebase.initializeApp(config);
     const db = firebase.database();
 
     let user = JSON.parse(localStorage.getItem('app_user'));
     let activeChat = "";
-    const getAv = (n) => `https://ui-avatars.com/api/?name=${n}&background=random&color=fff`;
 
-    document.getElementById('loginBtn').addEventListener('click', function() {
-        const u = uInp.value.trim(), p = pInp.value.trim();
+    function login() {
+        const u = document.getElementById('uInp').value.trim();
+        const p = document.getElementById('pInp').value.trim();
         if(!u || !p) return alert("أكمل البيانات");
-        const data = { name: u, pass: p, tag: u + "#" + Math.floor(1000+Math.random()*9000), av: getAv(u) };
-        db.ref('users/'+u).set(data).then(() => { localStorage.setItem('app_user', JSON.stringify(data)); location.reload(); });
-    });
+        db.ref('users/'+u).once('value', s => {
+            const d = s.val();
+            if(d && d.pass !== p) return alert("كلمة المرور خاطئة!");
+            user = d || { name:u, pass:p, tag: u+"#"+Math.floor(1000+Math.random()*9000), avatar:'' };
+            db.ref('users/'+u).set(user);
+            localStorage.setItem('app_user', JSON.stringify(user));
+            location.reload();
+        });
+    }
 
     if(user) {
         document.getElementById('authArea').classList.add('hidden');
         document.getElementById('appArea').classList.remove('hidden');
-        document.getElementById('myTagDisplay').innerText = user.tag;
-        document.getElementById('myNameDisplay').innerText = user.name;
-        document.getElementById('myProfileImg').src = user.av || getAv(user.name);
+        document.getElementById('userNameDisplay').innerText = user.name;
+        document.getElementById('userTagDisplay').innerText = user.tag;
+        document.getElementById('myAvatarDisplay').src = user.avatar || 'https://ui-avatars.com/api/?name='+user.name;
         loadPosts(); loadRequests(); loadFriends();
     }
 
-    // الدالة المنقذة: تضمن إخفاء كل شيء وإظهار الصفحة المطلوبة فقط
-    window.showTab = function(id, el) {
-        // إخفاء كافة الصفحات
-        const pages = document.getElementsByClassName('page-content');
-        for(let i=0; i<pages.length; i++) { pages[i].classList.add('hidden'); }
-        
-        // إظهار الصفحة المختارة
-        document.getElementById('p-' + id).classList.remove('hidden');
-        
-        // تحديث شكل الأزرار
-        const navs = document.getElementsByClassName('nav-i');
-        for(let i=0; i<navs.length; i++) { navs[i].classList.remove('active'); }
-        el.classList.add('active');
-    };
+    function tab(t) {
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.querySelectorAll('.nav-i').forEach(i => i.classList.remove('active'));
+        document.getElementById('p-'+t).classList.remove('hidden');
+        document.getElementById('n-'+t).classList.add('active');
+    }
 
-    window.postNow = function() {
-        const t = pTxt.value, img = pImg.value;
-        if(t || img) {
-            db.ref('posts').push({ u:user.name, t:t, img:img, av:user.av, tag:user.tag, likes: 0 });
-            pTxt.value = ""; pImg.value = "";
+    function updateAvatar() {
+        const url = document.getElementById('avatarUrlInput').value.trim();
+        if(url) {
+            db.ref('users/'+user.name+'/avatar').set(url).then(() => {
+                user.avatar = url;
+                localStorage.setItem('app_user', JSON.stringify(user));
+                document.getElementById('myAvatarDisplay').src = url;
+                alert("تم التحديث!");
+            });
         }
-    };
+    }
+
+    function post() {
+        const t = document.getElementById('pTxt').value.trim();
+        const img = document.getElementById('pImgUrl').value.trim();
+        if(t || img) {
+            db.ref('posts').push({ u:user.name, utag:user.tag, t:t, img:img, avatar:user.avatar || '' });
+            document.getElementById('pTxt').value = ""; document.getElementById('pImgUrl').value = "";
+        }
+    }
 
     function loadPosts() {
         db.ref('posts').on('value', s => {
-            feed.innerHTML = "";
+            const f = document.getElementById('feed'); f.innerHTML = "";
             s.forEach(p => {
-                const d = p.val(); const id = p.key;
-                feed.insertAdjacentHTML('afterbegin', `<div class="card">
-                    <b>${d.u}</b> <small>${d.tag}</small>
-                    <p>${d.t}</p>
-                    ${d.img ? `<img src="${d.img}" style="width:100%; border-radius:10px;">` : ''}
-                    <button onclick="db.ref('posts/${id}/likes').transaction(c=>(c||0)+1)" style="border:none; background:none; color:blue; cursor:pointer;">👍 ${d.likes || 0}</button>
-                </div>`);
+                const d = p.val();
+                f.insertAdjacentHTML('afterbegin', `
+                    <div class="card">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <img src="${d.avatar || 'https://ui-avatars.com/api/?name='+d.u}" class="u-img">
+                            <div style="display:flex; flex-direction:column;">
+                                <b>${d.u}</b> <span class="user-tag">${d.utag || d.u+'#0000'}</span>
+                            </div>
+                        </div>
+                        <p>${d.t}</p>
+                        ${d.img ? `<img src="${d.img}" class="post-img">` : ''}
+                        <button class="btn" style="width:auto; background:#eee; color:#333; margin-top:10px;" onclick="like('${p.key}')">👍 ${d.likes ? Object.keys(d.likes).length : 0} إعجاب</button>
+                    </div>`);
             });
         });
     }
 
-    window.searchUsers = function() {
-        const q = sInp.value.toLowerCase(); sRes.innerHTML = ""; if(!q) return;
-        db.ref('users').once('value', s => {
-            s.forEach(u => {
-                if(u.key.toLowerCase().includes(q) && u.key !== user.name) {
-                    sRes.innerHTML += `<div class="card" style="display:flex;justify-content:space-between"><span>${u.key}</span><button onclick="sendReq('${u.key}')">إضافة</button></div>`;
-                }
-            });
-        });
-    };
+    function like(id) {
+        const r = db.ref('posts/'+id+'/likes/'+user.name);
+        r.once('value', s => { if(s.exists()) r.remove(); else r.set(true); });
+    }
 
-    window.sendReq = function(to) { db.ref('reqs/'+to+'/'+user.name).set(true); alert("تم الطلب"); };
+    function addFriend() {
+        const tag = document.getElementById('friendTagI').value.trim();
+        db.ref('users').once('value', s => {
+            let found = null;
+            s.forEach(u => { if(u.val().tag === tag) found = u.key; });
+            if(found && found !== user.name) {
+                db.ref('reqs/'+found+'/'+user.name).set({n: user.name, t: user.tag});
+                alert("تم إرسال طلب الصداقة");
+            } else alert("المستخدم غير موجود");
+        });
+    }
 
     function loadRequests() {
         db.ref('reqs/'+user.name).on('value', s => {
-            reqs.innerHTML = s.exists() ? "" : "لا توجد طلبات";
-            s.forEach(r => { reqs.innerHTML += `<button onclick="acceptFriend('${r.key}')">قبول ${r.key}</button>`; });
+            const a = document.getElementById('reqsArea'); a.innerHTML = "";
+            s.forEach(r => {
+                a.innerHTML += `<div class="card" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span><b>${r.val().n}</b> يريد إضافتك</span>
+                    <button class="btn" style="width:60px;" onclick="accept('${r.key}')">قبول</button>
+                </div>`;
+            });
         });
     }
 
-    window.acceptFriend = function(n) {
+    function accept(n) {
         db.ref('users/'+user.name+'/friends/'+n).set(true);
         db.ref('users/'+n+'/friends/'+user.name).set(true);
         db.ref('reqs/'+user.name+'/'+n).remove();
-    };
+    }
 
     function loadFriends() {
         db.ref('users/'+user.name+'/friends').on('value', s => {
-            fList.innerHTML = s.exists() ? "" : "أضف أصدقاء";
-            s.forEach(f => { fList.innerHTML += `<div class="card" onclick="openChat('${f.key}')">👤 ${f.key}</div>`; });
-        });
-    }
-
-    window.openChat = function(name) {
-        activeChat = name; chatTarget.innerText = name;
-        document.getElementById('chat-room').classList.remove('hidden');
-        const id = [user.name, name].sort().join("_");
-        db.ref('chats/'+id).on('value', s => {
-            chatMsgs.innerHTML = "";
-            s.forEach(m => {
-                const d = m.val();
-                chatMsgs.innerHTML += `<div class="msg ${d.s===user.name?'me':'him'}">${d.t}</div>`;
-            });
-            chatMsgs.scrollTop = chatMsgs.scrollHeight;
-        });
-    };
-
-    window.closeChat = function() { document.getElementById('chat-room').classList.add('hidden'); };
-
-    window.sendMsg = function() {
-        if(!mInp.value) return;
-        const id = [user.name, activeChat].sort().join("_");
-        db.ref('chats/'+id).push({ s:user.name, t:mInp.value });
-        mInp.value = "";
-    };
-
-    window.updateAvatar = function() {
-        const url = newAvUrl.value.trim();
-        if(url) {
-            db.ref('users/'+user.name+'/av').set(url).then(() => {
-                user.av = url; localStorage.setItem('app_user', JSON.stringify(user)); location.reload();
-            });
-        }
-    };
-
-    window.logoutNow = function() { localStorage.clear(); location.reload(); };
-</script>
-</body>
-</html>
+            const l = document.getElementById('friendsList'); l.innerHTML = "<h4>الأصدقاء</h4>";
+            s.forEach(f => {
+                l.innerHTML += `<div class="card" onclick="chat('${f.key}')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">👤 ${f.key} (اضغط لل
