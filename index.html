@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة تواصل Pro</title>
+    <title>منصة تواصل - نسخة الاسترداد الكاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
@@ -13,29 +13,24 @@
         .header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 600px; margin: auto; padding: 10px; }
         .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .u-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #eee; }
-        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 2px 5px; border-radius: 4px; display: inline-block; }
         input, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
         .btn { background: var(--main); color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .post-img { width: 100%; border-radius: 8px; margin-top: 10px; display: block; max-height: 400px; object-fit: contain; background: #fafafa; }
+        .user-tag { font-size: 11px; color: #65676b; background: #e4e6eb; padding: 2px 5px; border-radius: 4px; display: inline-block; }
+        .hidden { display: none !important; }
         .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 60px; z-index: 1000; }
         .nav-i { flex: 1; text-align: center; line-height: 60px; font-size: 24px; cursor: pointer; color: #65676b; }
-        .hidden { display: none !important; }
-        .chat-pop { position: fixed; bottom: 65px; left: 10px; right: 10px; max-width: 380px; height: 450px; background: white; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column; z-index: 2000; border: 1px solid #ddd; }
-        .m-area { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; background: #f9f9f9; }
-        .msg { padding: 8px 12px; margin: 4px; border-radius: 15px; max-width: 75%; font-size: 14px; }
-        .m-me { align-self: flex-start; background: #dcf8c6; }
-        .m-him { align-self: flex-end; background: #fff; border: 1px solid #eee; }
     </style>
 </head>
 <body>
 
     <div id="authArea" class="container">
         <div class="card" style="margin-top: 50px; text-align: center;">
-            <h2 style="color: var(--main);">تواصل Pro</h2>
+            <h2 style="color: var(--main);">دخول الحساب</h2>
+            <p style="font-size: 13px; color: #888;">أدخل اسمك وكلمة مرورك لاستعادة بياناتك</p>
             <input id="uInp" type="text" placeholder="اسم المستخدم">
             <input id="pInp" type="password" placeholder="كلمة المرور">
-            <button class="btn" onclick="login()">دخول</button>
+            <button class="btn" onclick="login()">دخول واسترداد</button>
+            <p id="errorMsg" style="color: red; margin-top: 10px; font-size: 12px;"></p>
         </div>
     </div>
 
@@ -45,83 +40,85 @@
             <div id="p-home" class="page">
                 <div class="card">
                     <textarea id="pTxt" placeholder="بماذا تفكر؟"></textarea>
-                    <input id="pImgUrl" placeholder="رابط صورة للمنشور (اختياري)">
+                    <input id="pImgUrl" placeholder="رابط صورة (اختياري)">
                     <button class="btn" onclick="post()">نشر</button>
                 </div>
                 <div id="feed"></div>
             </div>
-
-            <div id="p-friends" class="page hidden">
-                <div class="card">
-                    <h3>👥 إضافة صديق</h3>
-                    <input id="friendTagI" placeholder="الاسم#0000">
-                    <button class="btn" onclick="addFriend()">إرسال طلب</button>
-                </div>
-                <div id="reqsArea"></div>
-                <div id="friendsList"></div>
-            </div>
-
             <div id="p-me" class="page hidden">
                 <div class="card" style="text-align: center;">
-                    <img id="myAvatarDisplay" class="u-img" style="width:100px; height:100px; border:3px solid var(--main); margin-bottom:10px;">
-                    <h3 id="userNameDisplay" style="margin:5px 0;"></h3>
+                    <img id="myAvatarDisplay" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:2px solid var(--main);">
+                    <h3 id="userNameDisplay"></h3>
                     <span id="userTagDisplay" class="user-tag"></span>
                     <hr>
-                    <input id="avatarUrlInput" placeholder="ضع رابط صورتك الشخصية هنا">
-                    <button class="btn" onclick="updateAvatar()">تحديث صورة البروفايل</button>
                     <button class="btn" style="background:#ff4757; margin-top:20px;" onclick="logout()">خروج</button>
                 </div>
             </div>
         </div>
-
         <div class="nav">
             <div class="nav-i" onclick="tab('home')">🏠</div>
-            <div class="nav-i" onclick="tab('friends')">👥</div>
             <div class="nav-i" onclick="tab('me')">⚙️</div>
         </div>
     </div>
 
-    <div id="chatBox" class="chat-pop hidden">
-        <div style="background:var(--main); color:white; padding:12px; display:flex; justify-content:space-between;">
-            <b id="chatTitle">الدردشة</b> <span onclick="closeChat()" style="cursor:pointer">✕</span>
-        </div>
-        <div id="msgsDisplay" class="m-area"></div>
-        <div style="padding:10px; display:flex; background:white;">
-            <input id="msgInput" style="margin:0; flex:1;" placeholder="اكتب...">
-            <button class="btn" style="width:50px; margin-right:5px;" onclick="sendMsg()">↗</button>
-        </div>
-    </div>
-
 <script>
+    // تهيئة Firebase
     const config = { databaseURL: "https://mychatapp-d7580-default-rtdb.firebaseio.com/" };
     if (!firebase.apps.length) firebase.initializeApp(config);
     const db = firebase.database();
 
+    // جلب بيانات المستخدم من الذاكرة المحلية
     let user = JSON.parse(localStorage.getItem('app_user'));
-    let activeChat = "";
 
     function login() {
         const u = document.getElementById('uInp').value.trim();
         const p = document.getElementById('pInp').value.trim();
-        if(!u || !p) return alert("أكمل البيانات");
-        db.ref('users/'+u).once('value', s => {
-            const d = s.val();
-            if(d && d.status === 'banned') return alert("محظور!");
-            if(d && d.pass !== p) return alert("خطأ!");
-            user = d || { name:u, pass:p, tag: u+"#"+Math.floor(1000+Math.random()*9000), status:'active', avatar:'' };
-            db.ref('users/'+u).set(user);
-            localStorage.setItem('app_user', JSON.stringify(user));
-            location.reload();
+        const err = document.getElementById('errorMsg');
+        
+        if(!u || !p) return alert("يرجى تعبئة الحقول");
+
+        // البحث عن المستخدم في قاعدة البيانات
+        db.ref('users/' + u).once('value', s => {
+            const data = s.val();
+            
+            if (data) {
+                // الحساب موجود: نتأكد من كلمة المرور
+                if (data.pass === p) {
+                    user = data; // جلب البيانات كاملة (الاسم، التاج، الصورة)
+                    completeLogin();
+                } else {
+                    err.innerText = "⚠️ كلمة المرور خاطئة لهذا الحساب!";
+                }
+            } else {
+                // الحساب جديد: ننشئه لأول مرة
+                user = {
+                    name: u,
+                    pass: p,
+                    tag: u + "#" + Math.floor(1000 + Math.random() * 9000),
+                    avatar: '',
+                    status: 'active'
+                };
+                db.ref('users/' + u).set(user).then(completeLogin);
+            }
         });
     }
 
-    if(user) {
+    function completeLogin() {
+        localStorage.setItem('app_user', JSON.stringify(user));
+        location.reload(); // إعادة تحميل لتطبيق البيانات
+    }
+
+    // تشغيل التطبيق إذا كان المستخدم مسجلاً
+    if(user && user.name) {
         document.getElementById('authArea').classList.add('hidden');
         document.getElementById('appArea').classList.remove('hidden');
-        document.getElementById('userNameDisplay').innerText = user.name;
-        document.getElementById('userTagDisplay').innerText = user.tag;
+        
+        // منع ظهور undefined: استخدام قيمة افتراضية إذا كانت البيانات ناقصة
+        document.getElementById('userNameDisplay').innerText = user.name || "مستخدم";
+        document.getElementById('userTagDisplay').innerText = user.tag || user.name + "#0000";
         document.getElementById('myAvatarDisplay').src = user.avatar || 'https://via.placeholder.com/100';
-        loadPosts(); loadRequests(); loadFriends();
+        
+        loadPosts();
     }
 
     function tab(t) {
@@ -129,24 +126,19 @@
         document.getElementById('p-'+t).classList.remove('hidden');
     }
 
-    function updateAvatar() {
-        const url = document.getElementById('avatarUrlInput').value.trim();
-        if(url) {
-            db.ref('users/'+user.name+'/avatar').set(url).then(() => {
-                user.avatar = url;
-                localStorage.setItem('app_user', JSON.stringify(user));
-                document.getElementById('myAvatarDisplay').src = url;
-                alert("تم تحديث البروفايل!");
-            });
-        }
-    }
-
     function post() {
         const t = document.getElementById('pTxt').value.trim();
         const img = document.getElementById('pImgUrl').value.trim();
         if(t || img) {
-            db.ref('posts').push({ u:user.name, utag:user.tag, t:t, img:img, avatar:user.avatar || '' });
-            document.getElementById('pTxt').value = ""; document.getElementById('pImgUrl').value = "";
+            db.ref('posts').push({ 
+                u: user.name, 
+                utag: user.tag || (user.name + "#0000"), 
+                t: t, 
+                img: img, 
+                avatar: user.avatar || '' 
+            });
+            document.getElementById('pTxt').value = ""; 
+            document.getElementById('pImgUrl').value = "";
         }
     }
 
@@ -158,87 +150,23 @@
                 f.insertAdjacentHTML('afterbegin', `
                     <div class="card">
                         <div style="display:flex; align-items:center; gap:10px;">
-                            <img src="${d.avatar || 'https://via.placeholder.com/45'}" class="u-img">
-                            <div style="display:flex; flex-direction:column;">
-                                <b>${d.u}</b> <span class="user-tag">${d.utag || d.u+'#0000'}</span>
+                            <img src="${d.avatar || 'https://via.placeholder.com/45'}" style="width:40px; height:40px; border-radius:50%;">
+                            <div>
+                                <b>${d.u || 'مجهول'}</b> 
+                                <span class="user-tag">${d.utag || ''}</span>
                             </div>
                         </div>
                         <p>${d.t}</p>
-                        ${d.img ? `<img src="${d.img}" class="post-img" onerror="this.style.display='none'">` : ''}
-                        <button class="btn" style="width:auto; background:#eee; color:#333; margin-top:10px;" onclick="like('${p.key}')">👍 ${d.likes ? Object.keys(d.likes).length : 0} لايك</button>
+                        ${d.img ? `<img src="${d.img}" style="width:100%; border-radius:8px;">` : ''}
                     </div>`);
             });
         });
     }
 
-    function like(id) {
-        const r = db.ref('posts/'+id+'/likes/'+user.name);
-        r.once('value', s => { if(s.exists()) r.remove(); else r.set(true); });
+    function logout() {
+        localStorage.clear();
+        location.reload();
     }
-
-    function addFriend() {
-        const tag = document.getElementById('friendTagI').value.trim();
-        db.ref('users').once('value', s => {
-            let found = null;
-            s.forEach(u => { if(u.val().tag === tag) found = u.key; });
-            if(found && found !== user.name) {
-                db.ref('reqs/'+found+'/'+user.name).set({n: user.name, t: user.tag});
-                alert("تم الإرسال");
-            } else alert("غير موجود");
-        });
-    }
-
-    function loadRequests() {
-        db.ref('reqs/'+user.name).on('value', s => {
-            const a = document.getElementById('reqsArea'); a.innerHTML = "";
-            s.forEach(r => {
-                a.innerHTML += `<div class="card" style="display:flex; justify-content:space-between;">
-                    <span>${r.val().n}</span>
-                    <button class="btn" style="width:60px;" onclick="accept('${r.key}')">قبول</button>
-                </div>`;
-            });
-        });
-    }
-
-    function accept(n) {
-        db.ref('users/'+user.name+'/friends/'+n).set(true);
-        db.ref('users/'+n+'/friends/'+user.name).set(true);
-        db.ref('reqs/'+user.name+'/'+n).remove();
-    }
-
-    function loadFriends() {
-        db.ref('users/'+user.name+'/friends').on('value', s => {
-            const l = document.getElementById('friendsList'); l.innerHTML = "<h4>الأصدقاء</h4>";
-            s.forEach(f => {
-                l.innerHTML += `<div class="card" onclick="chat('${f.key}')" style="cursor:pointer">👤 ${f.key}</div>`;
-            });
-        });
-    }
-
-    function chat(n) {
-        activeChat = n; document.getElementById('chatBox').classList.remove('hidden');
-        document.getElementById('chatTitle').innerText = n;
-        const room = user.name < n ? user.name+"_"+n : n+"_"+user.name;
-        db.ref('chats/'+room).on('value', s => {
-            const d = document.getElementById('msgsDisplay'); d.innerHTML = "";
-            s.forEach(m => {
-                const side = m.val().s === user.name ? 'm-me' : 'm-him';
-                d.innerHTML += `<div class="msg ${side}">${m.val().t}</div>`;
-            });
-            d.scrollTop = d.scrollHeight;
-        });
-    }
-
-    function sendMsg() {
-        const t = document.getElementById('msgInput').value.trim();
-        if(!t || !activeChat) return;
-        const room = user.name < activeChat ? user.name+"_"+activeChat : activeChat+"_"+user.name;
-        db.ref('chats/'+room).push({ s:user.name, t:t });
-        document.getElementById('msgInput').value = "";
-    }
-
-    function closeChat() { document.getElementById('chatBox').classList.add('hidden'); }
-    function logout() { localStorage.clear(); location.reload(); }
 </script>
 </body>
 </html>
