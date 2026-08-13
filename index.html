@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -124,16 +123,26 @@ const db=firebase.database();
 let me=null;
 let activeChat=null;
 let chatListener=null;
+let postsListener=null;
+let friendsListener=null;
+let requestsListener=null;
 
 function notify(t){
-notif.innerText=t;
-notif.style.display="block";
-setTimeout(()=>notif.style.display="none",3000);
+const notifEl = document.getElementById("notif");
+if(notifEl) {
+notifEl.innerText=t;
+notifEl.style.display="block";
+setTimeout(()=>notifEl.style.display="none",3000);
+}
 }
 
 function login(){
-const u=username.value.trim();
-const p=password.value.trim();
+const usernameEl = document.getElementById("username");
+const passwordEl = document.getElementById("password");
+if(!usernameEl || !passwordEl) return alert("خطأ في الصفحة");
+
+const u=usernameEl.value.trim();
+const p=passwordEl.value.trim();
 if(!u||!p)return alert("أدخل البيانات");
 
 db.ref("users/"+u).once("value",s=>{
@@ -151,11 +160,16 @@ function start(){
 me=JSON.parse(localStorage.getItem("me"));
 if(!me)return;
 
-loginPage.classList.add("hidden");
-app.classList.remove("hidden");
+const loginPageEl = document.getElementById("loginPage");
+const appEl = document.getElementById("app");
+const myNameEl = document.getElementById("myName");
+const avatarEl = document.getElementById("avatar");
 
-myName.innerText=me.name;
-avatar.src=me.avatar||avatar.src;
+if(loginPageEl) loginPageEl.classList.add("hidden");
+if(appEl) appEl.classList.remove("hidden");
+
+if(myNameEl) myNameEl.innerText=me.name;
+if(avatarEl) avatarEl.src=me.avatar||avatarEl.src;
 
 const status=db.ref("users/"+me.name+"/online");
 db.ref(".info/connected").on("value",snap=>{
@@ -173,23 +187,35 @@ loadRequests();
 start();
 
 function saveAvatar(){
-me.avatar=avatarUrl.value;
+const avatarUrlEl = document.getElementById("avatarUrl");
+const avatarEl = document.getElementById("avatar");
+if(!avatarUrlEl || !avatarEl) return;
+
+me.avatar=avatarUrlEl.value;
 db.ref("users/"+me.name+"/avatar").set(me.avatar);
 localStorage.setItem("me",JSON.stringify(me));
-avatar.src=me.avatar;
+avatarEl.src=me.avatar;
 }
 
 function addPost(){
-const t=postText.value.trim();
+const postTextEl = document.getElementById("postText");
+if(!postTextEl) return;
+
+const t=postTextEl.value.trim();
 if(!t)return;
 db.ref("posts").push({u:me.name,t:t,a:me.avatar});
-postText.value="";
+postTextEl.value="";
 }
 
 function loadPosts(){
-db.ref("posts").on("child_added",s=>{
+const postsEl = document.getElementById("posts");
+if(!postsEl) return;
+
+if(postsListener) db.ref("posts").off("child_added",postsListener);
+
+postsListener = (s)=>{
 const d=s.val();
-posts.insertAdjacentHTML("afterbegin",`
+postsEl.insertAdjacentHTML("afterbegin",`
 <div class="card">
 <div style="display:flex;gap:10px">
 <img src="${d.a||'https://via.placeholder.com/45'}" class="uimg">
@@ -207,7 +233,9 @@ posts.insertAdjacentHTML("afterbegin",`
 
 loadLikes(s.key);
 loadComments(s.key);
-});
+};
+
+db.ref("posts").on("child_added",postsListener);
 }
 
 function likePost(id){
@@ -217,41 +245,58 @@ ref.once("value",s=>{s.exists()?ref.remove():ref.set(true);});
 
 function loadLikes(id){
 db.ref("likes/"+id).on("value",s=>{
-document.getElementById("likes_"+id).innerText=s.numChildren()+" إعجاب";
+const likesEl = document.getElementById("likes_"+id);
+if(likesEl) likesEl.innerText=s.numChildren()+" إعجاب";
 });
 }
 
 function commentPost(id){
-const txt=document.getElementById("cinput_"+id).value.trim();
+const cinputEl = document.getElementById("cinput_"+id);
+if(!cinputEl) return;
+
+const txt=cinputEl.value.trim();
 if(!txt)return;
 db.ref("comments/"+id).push({u:me.name,t:txt});
-document.getElementById("cinput_"+id).value="";
+cinputEl.value="";
 }
 
 function loadComments(id){
 db.ref("comments/"+id).on("child_added",s=>{
 const d=s.val();
-document.getElementById("comments_"+id")
-.insertAdjacentHTML("beforeend",
+const commentsEl = document.getElementById(`comments_${id}`);
+if(commentsEl) {
+commentsEl.insertAdjacentHTML("beforeend",
 `<div style="background:#f1f5f9;padding:6px;border-radius:8px;margin:4px 0">
 <b>${d.u}:</b> ${d.t}</div>`);
+}
 });
 }
 
 function sendRequest(){
-const f=friendName.value.trim();
+const friendNameEl = document.getElementById("friendName");
+if(!friendNameEl) return;
+
+const f=friendNameEl.value.trim();
 if(!f)return;
 db.ref("requests/"+f+"/"+me.name).set(true);
 notify("تم إرسال الطلب");
+friendNameEl.value="";
 }
 
 function loadRequests(){
-db.ref("requests/"+me.name).on("child_added",s=>{
+const requestsEl = document.getElementById("requests");
+if(!requestsEl) return;
+
+if(requestsListener) db.ref("requests/"+me.name).off("child_added",requestsListener);
+
+requestsListener = (s)=>{
 notify("طلب صداقة جديد 👥");
-requests.insertAdjacentHTML("beforeend",
+requestsEl.insertAdjacentHTML("beforeend",
 `<div class="card">${s.key}
 <button onclick="accept('${s.key}')">قبول</button></div>`);
-});
+};
+
+db.ref("requests/"+me.name).on("child_added",requestsListener);
 }
 
 function accept(n){
@@ -261,41 +306,64 @@ db.ref("requests/"+me.name+"/"+n).remove();
 }
 
 function loadFriends(){
-db.ref("friends/"+me.name).on("child_added",s=>{
-friends.insertAdjacentHTML("beforeend",
+const friendsEl = document.getElementById("friends");
+if(!friendsEl) return;
+
+friendsEl.innerHTML="";
+
+if(friendsListener) db.ref("friends/"+me.name).off("child_added",friendsListener);
+
+friendsListener = (s)=>{
+friendsEl.insertAdjacentHTML("beforeend",
 `<div class="card" onclick="openChat('${s.key}')">🟢 ${s.key}</div>`);
-});
+};
+
+db.ref("friends/"+me.name).on("child_added",friendsListener);
 }
 
 function openChat(user){
-chatBox.style.display="flex";
-chatUser.innerText=user;
+const chatBoxEl = document.getElementById("chatBox");
+const chatUserEl = document.getElementById("chatUser");
+const messagesEl = document.getElementById("messages");
+
+if(!chatBoxEl || !chatUserEl || !messagesEl) return;
+
+chatBoxEl.style.display="flex";
+chatUserEl.innerText=user;
 activeChat=[me.name,user].sort().join("_");
-messages.innerHTML="";
+messagesEl.innerHTML="";
 
 if(chatListener) db.ref("chats/"+activeChat).off("child_added",chatListener);
 
-chatListener=db.ref("chats/"+activeChat).on("child_added",s=>{
+chatListener=(s)=>{
 const d=s.val();
 const cls=d.s===me.name?"me":"him";
 if(d.s!==me.name) notify("رسالة جديدة 💬");
-messages.insertAdjacentHTML("beforeend",`<div class="msg ${cls}">${d.t}</div>`);
-messages.scrollTop=messages.scrollHeight;
-});
+messagesEl.insertAdjacentHTML("beforeend",`<div class="msg ${cls}">${d.t}</div>`);
+messagesEl.scrollTop=messagesEl.scrollHeight;
+};
+
+db.ref("chats/"+activeChat).on("child_added",chatListener);
 }
 
 function sendMsg(){
-const t=msgInput.value.trim();
+const msgInputEl = document.getElementById("msgInput");
+if(!msgInputEl) return;
+
+const t=msgInputEl.value.trim();
 if(!t)return;
 db.ref("chats/"+activeChat).push({s:me.name,t:t});
-msgInput.value="";
+msgInputEl.value="";
 }
 
-closeChat.onclick=()=>{
-chatBox.style.display="none";
+const closeChatEl = document.getElementById("closeChat");
+if(closeChatEl) {
+closeChatEl.onclick=()=>{
+const chatBoxEl = document.getElementById("chatBox");
+if(chatBoxEl) chatBoxEl.style.display="none";
 if(chatListener) db.ref("chats/"+activeChat).off("child_added",chatListener);
 };
+}
 </script>
 </body>
 </html>
-```
